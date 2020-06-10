@@ -15,14 +15,14 @@
  */
 package org.openrewrite.java;
 
-import java8tools.com.sun.source.tree.*;
-import java8tools.com.sun.source.util.TreePathScanner;
-import java8tools.com.sun.tools.javac.code.Flags;
-import java8tools.com.sun.tools.javac.code.Symbol;
-import java8tools.com.sun.tools.javac.code.TypeTag;
-import java8tools.com.sun.tools.javac.tree.EndPosTable;
-import java8tools.com.sun.tools.javac.tree.JCTree;
-import java8tools.com.sun.tools.javac.tree.JCTree.*;
+import com.sun.source.tree.*;
+import com.sun.source.util.TreePathScanner;
+import com.sun.tools.javac.code.Flags;
+import com.sun.tools.javac.code.Symbol;
+import com.sun.tools.javac.code.TypeTag;
+import com.sun.tools.javac.tree.EndPosTable;
+import com.sun.tools.javac.tree.JCTree;
+import com.sun.tools.javac.tree.JCTree.*;
 import org.openrewrite.Formatting;
 import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.java.tree.*;
@@ -767,9 +767,9 @@ public class Java8ParserVisitor extends TreePathScanner<J, Formatting> {
 
         JavaType.Method type = null;
         if (genericSymbol != null && jcSelect.type != null) {
-            Function<java8tools.com.sun.tools.javac.code.Type, JavaType.Method.Signature> signature = t -> {
-                if (t instanceof java8tools.com.sun.tools.javac.code.Type.MethodType) {
-                    java8tools.com.sun.tools.javac.code.Type.MethodType mt = (java8tools.com.sun.tools.javac.code.Type.MethodType) t;
+            Function<com.sun.tools.javac.code.Type, JavaType.Method.Signature> signature = t -> {
+                if (t instanceof com.sun.tools.javac.code.Type.MethodType) {
+                    com.sun.tools.javac.code.Type.MethodType mt = (com.sun.tools.javac.code.Type.MethodType) t;
                     return new JavaType.Method.Signature(type(mt.restype), mt.argtypes.stream().filter(Objects::nonNull)
                             .map(this::type).collect(toList()));
                 }
@@ -777,8 +777,8 @@ public class Java8ParserVisitor extends TreePathScanner<J, Formatting> {
             };
 
             JavaType.Method.Signature genericSignature;
-            if (genericSymbol.type instanceof java8tools.com.sun.tools.javac.code.Type.ForAll) {
-                genericSignature = signature.apply(((java8tools.com.sun.tools.javac.code.Type.ForAll) genericSymbol.type).qtype);
+            if (genericSymbol.type instanceof com.sun.tools.javac.code.Type.ForAll) {
+                genericSignature = signature.apply(((com.sun.tools.javac.code.Type.ForAll) genericSymbol.type).qtype);
             } else {
                 genericSignature = signature.apply(genericSymbol.type);
             }
@@ -1423,19 +1423,19 @@ public class Java8ParserVisitor extends TreePathScanner<J, Formatting> {
     }
 
     @Nullable
-    private JavaType type(@Nullable java8tools.com.sun.tools.javac.code.Type type) {
+    private JavaType type(@Nullable com.sun.tools.javac.code.Type type) {
         return type(type, emptyList());
     }
 
     @Nullable
-    private JavaType type(@Nullable java8tools.com.sun.tools.javac.code.Type type, List<Symbol> stack) {
+    private JavaType type(@Nullable com.sun.tools.javac.code.Type type, List<Symbol> stack) {
         return type(type, stack, false);
     }
 
     @Nullable
-    private JavaType type(@Nullable java8tools.com.sun.tools.javac.code.Type type,
+    private JavaType type(@Nullable com.sun.tools.javac.code.Type type,
                           List<Symbol> stack, boolean shallow) {
-        if (type instanceof java8tools.com.sun.tools.javac.code.Type.ClassType) {
+        if (type instanceof com.sun.tools.javac.code.Type.ClassType) {
             Symbol.ClassSymbol sym = (Symbol.ClassSymbol) type.tsym;
 
             if (stack.contains(sym))
@@ -1457,8 +1457,8 @@ public class Java8ParserVisitor extends TreePathScanner<J, Formatting> {
                             ))
                             .collect(toList());
 
-                    java8tools.com.sun.tools.javac.code.Type.ClassType classType = (java8tools.com.sun.tools.javac.code.Type.ClassType) type;
-                    java8tools.com.sun.tools.javac.code.Type.ClassType symType = (java8tools.com.sun.tools.javac.code.Type.ClassType) sym.type;
+                    com.sun.tools.javac.code.Type.ClassType classType = (com.sun.tools.javac.code.Type.ClassType) type;
+                    com.sun.tools.javac.code.Type.ClassType symType = (com.sun.tools.javac.code.Type.ClassType) sym.type;
                     return JavaType.Class.build(sym.className(), fields,
                             classType.typarams_field == null ? emptyList() : classType.typarams_field.stream().map(tParam -> type(tParam, stackWithSym, true)).filter(Objects::nonNull).collect(toList()),
                             symType.interfaces_field == null ? emptyList() : symType.interfaces_field.stream().map(iParam -> type(iParam, stackWithSym, false)).filter(Objects::nonNull).collect(toList()),
@@ -1467,13 +1467,13 @@ public class Java8ParserVisitor extends TreePathScanner<J, Formatting> {
                             relaxedClassTypeMatching);
                 }
             }
-        } else if (type instanceof java8tools.com.sun.tools.javac.code.Type.TypeVar) {
-            return new JavaType.GenericTypeVariable(type.tsym.name.toString(), TypeUtils.asClass(type(((java8tools.com.sun.tools.javac.code.Type.TypeVar) type).bound, stack)));
-        } else if (type instanceof java8tools.com.sun.tools.javac.code.Type.JCPrimitiveType) {
+        } else if (type instanceof com.sun.tools.javac.code.Type.TypeVar) {
+            return new JavaType.GenericTypeVariable(type.tsym.name.toString(), TypeUtils.asClass(type(((com.sun.tools.javac.code.Type.TypeVar) type).bound, stack)));
+        } else if (type instanceof com.sun.tools.javac.code.Type.JCPrimitiveType) {
             return primitive(type.getTag());
-        } else if (type instanceof java8tools.com.sun.tools.javac.code.Type.ArrayType) {
-            return new JavaType.Array(type(((java8tools.com.sun.tools.javac.code.Type.ArrayType) type).elemtype, stack));
-        } else if (java8tools.com.sun.tools.javac.code.Type.noType.equals(type)) {
+        } else if (type instanceof com.sun.tools.javac.code.Type.ArrayType) {
+            return new JavaType.Array(type(((com.sun.tools.javac.code.Type.ArrayType) type).elemtype, stack));
+        } else if (com.sun.tools.javac.code.Type.noType.equals(type)) {
             return null;
         } else {
             return null;

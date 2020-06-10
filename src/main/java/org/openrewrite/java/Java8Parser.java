@@ -1,14 +1,14 @@
 package org.openrewrite.java;
 
+import com.sun.tools.javac.comp.*;
+import com.sun.tools.javac.file.JavacFileManager;
+import com.sun.tools.javac.main.JavaCompiler;
+import com.sun.tools.javac.tree.JCTree;
+import com.sun.tools.javac.util.Context;
+import com.sun.tools.javac.util.Log;
+import com.sun.tools.javac.util.Options;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
-import java8tools.com.sun.tools.javac.comp.*;
-import java8tools.com.sun.tools.javac.file.JavacFileManager;
-import java8tools.com.sun.tools.javac.main.JavaCompiler;
-import java8tools.com.sun.tools.javac.tree.JCTree;
-import java8tools.com.sun.tools.javac.util.Context;
-import java8tools.com.sun.tools.javac.util.Log;
-import java8tools.com.sun.tools.javac.util.Options;
 import org.openrewrite.Formatting;
 import org.openrewrite.internal.StringUtils;
 import org.openrewrite.internal.lang.Nullable;
@@ -20,6 +20,8 @@ import javax.tools.JavaFileManager;
 import javax.tools.JavaFileObject;
 import javax.tools.StandardLocation;
 import java.io.*;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -54,10 +56,10 @@ public class Java8Parser implements JavaParser {
     private final JavaCompiler compiler;
     private final ResettableLog compilerLog = new ResettableLog(context);
 
-    private Java8Parser(@Nullable List<Path> classpath, Charset charset,
-                         boolean relaxedClassTypeMatching,
-                         MeterRegistry meterRegistry,
-                         boolean logCompilationWarningsAndErrors) {
+    Java8Parser(@Nullable List<Path> classpath, Charset charset,
+                        boolean relaxedClassTypeMatching,
+                        MeterRegistry meterRegistry,
+                        boolean logCompilationWarningsAndErrors) {
         this.meterRegistry = meterRegistry;
         this.classpath = classpath;
         this.charset = charset;
@@ -171,7 +173,7 @@ public class Java8Parser implements JavaParser {
      */
     private void enterAll(Collection<JCTree.JCCompilationUnit> cus) {
         Enter enter = Enter.instance(context);
-        java8tools.com.sun.tools.javac.util.List<JCTree.JCCompilationUnit> compilationUnits = java8tools.com.sun.tools.javac.util.List.from(
+        com.sun.tools.javac.util.List<JCTree.JCCompilationUnit> compilationUnits = com.sun.tools.javac.util.List.from(
                 cus.toArray(new JCTree.JCCompilationUnit[0]));
         enter.main(compilationUnits);
     }
@@ -222,8 +224,30 @@ public class Java8Parser implements JavaParser {
     public static class Builder extends JavaParser.Builder<Java8Parser, Builder> {
         @Override
         Java8Parser build() {
-            return new Java8Parser(classpath, charset, relaxedClassTypeMatching,
-                    meterRegistry, logCompilationWarningsAndErrors);
+//            return new Java8Parser(classpath, charset, relaxedClassTypeMatching,
+//                    meterRegistry, logCompilationWarningsAndErrors);
+
+            File tools = Paths.get(System.getProperty("java.home")).resolve("../lib/tools.jar").toFile();
+
+            if (tools.exists()) {
+                try {
+                    URLClassLoader child = new URLClassLoader(
+                            new URL[]{tools.toURI().toURL()},
+                            Java8Parser.class.getClassLoader()
+                    );
+
+                    @SuppressWarnings("unchecked") Class<Java8Parser> parserClass = (Class<Java8Parser>) Class
+                            .forName("org.openrewrite.java.Java8Parser", true, child);
+
+                    return parserClass
+                            .getDeclaredConstructor(List.class, Charset.class, Boolean.TYPE, MeterRegistry.class, Boolean.TYPE)
+                            .newInstance(classpath, charset, relaxedClassTypeMatching, meterRegistry, logCompilationWarningsAndErrors);
+                } catch (Exception e) {
+                    throw new IllegalStateException("Unable to construct Java8Parser.", e);
+                }
+            } else {
+                throw new IllegalStateException("To use Java8Parser, you must run the process with a JDK and not a JRE.");
+            }
         }
     }
 }

@@ -52,7 +52,9 @@ configurations.all {
 }
 
 dependencies {
-    implementation("org.openrewrite:rewrite-java:latest.integration")
+    compileOnly(files("${System.getProperty("java.home")}/../lib/tools.jar"))
+
+    implementation("org.openrewrite:rewrite-java:2.0.0-SNAPSHOT")
 
     implementation("org.slf4j:slf4j-api:1.7.+")
 
@@ -63,7 +65,7 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:latest.release")
 
 
-    testImplementation("org.openrewrite:rewrite-test:latest.integration")
+    testImplementation("org.openrewrite:rewrite-test:2.0.0-SNAPSHOT")
 }
 
 tasks.withType(KotlinCompile::class.java).configureEach {
@@ -75,12 +77,7 @@ tasks.withType(KotlinCompile::class.java).configureEach {
 tasks.named<JavaCompile>("compileJava") {
     sourceCompatibility = JavaVersion.VERSION_1_8.toString()
     targetCompatibility = JavaVersion.VERSION_1_8.toString()
-
-    options.isFork = true
-    options.forkOptions.executable = "javac"
-    options.compilerArgs.addAll(listOf("--release", "8"))
 }
-
 
 tasks.named<Test>("test") {
     useJUnitPlatform()
