@@ -1,0 +1,1 @@
+rootProject.name = "rewrite-java-8"
