@@ -52,8 +52,8 @@ import static org.openrewrite.Formatting.EMPTY;
 import static org.openrewrite.Formatting.format;
 import static org.openrewrite.Tree.randomId;
 
-public class Java8ParserVisitor extends TreePathScanner<J, Formatting> {
-    private static final Logger logger = LoggerFactory.getLogger(Java8ParserVisitor.class);
+public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Formatting> {
+    private static final Logger logger = LoggerFactory.getLogger(ReloadableJava8ParserVisitor.class);
 
     private final Path path;
     private final String source;
@@ -62,7 +62,7 @@ public class Java8ParserVisitor extends TreePathScanner<J, Formatting> {
     private EndPosTable endPosTable;
     private int cursor = 0;
 
-    public Java8ParserVisitor(Path path, String source, boolean relaxedClassTypeMatching) {
+    public ReloadableJava8ParserVisitor(Path path, String source, boolean relaxedClassTypeMatching) {
         this.path = path;
         this.source = source;
         this.relaxedClassTypeMatching = relaxedClassTypeMatching;

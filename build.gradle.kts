@@ -64,7 +64,6 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-api:latest.release")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:latest.release")
 
-
     testImplementation("org.openrewrite:rewrite-test:2.0.0-SNAPSHOT")
 }
 
@@ -185,8 +184,4 @@ tasks.withType<GenerateMavenPom> {
                     .joinToString("\n", "\n", "\n" + " ".repeat(4)))
         }
     }
-}
-
-tasks.withType<Javadoc> {
-    exclude("**/JavaParser**")
 }
