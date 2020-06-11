@@ -84,7 +84,7 @@ public class Java8Parser implements JavaParser {
         }
 
         @Override
-        Java8Parser build() {
+        public Java8Parser build() {
             lazyInitClassLoaders();
 
             try {
