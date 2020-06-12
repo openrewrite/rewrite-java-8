@@ -6,7 +6,7 @@ executors:
     environment:
       GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx2048m -XX:+HeapDumpOnOutOfMemoryError"'
     docker:
-      - image: cimg/openjdk:8u252-jdk
+      - image: circleci/openjdk:8u252-jdk
   machine-executor:
     working_directory: ~/rewrite-java-8
     machine:
