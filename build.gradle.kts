@@ -40,7 +40,6 @@ group = "org.openrewrite"
 description = "Eliminate technical debt. Automatically (for Java 8)."
 
 repositories {
-    mavenLocal()
     jcenter()
 }
 
@@ -54,7 +53,7 @@ configurations.all {
 dependencies {
     compileOnly(files("${System.getProperty("java.home")}/../lib/tools.jar"))
 
-    implementation("org.openrewrite:rewrite-java:2.0.0-SNAPSHOT")
+    implementation("org.openrewrite:rewrite-java:latest.release")
 
     implementation("org.slf4j:slf4j-api:1.7.+")
 
