@@ -40,9 +40,8 @@ group = "org.openrewrite"
 description = "Eliminate technical debt. Automatically (for Java 8)."
 
 repositories {
-    // TODO remove after rewrite-test is included in JCenter
+    mavenLocal()
     maven { url = uri("https://dl.bintray.com/openrewrite/maven") }
-
     jcenter()
 }
 
@@ -56,7 +55,7 @@ configurations.all {
 dependencies {
     compileOnly(files("${System.getProperty("java.home")}/../lib/tools.jar"))
 
-    implementation("org.openrewrite:rewrite-java:latest.release")
+    implementation("org.openrewrite:rewrite-java:latest.integration")
 
     implementation("org.slf4j:slf4j-api:1.7.+")
 
@@ -66,7 +65,7 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-api:latest.release")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:latest.release")
 
-    testImplementation("org.openrewrite:rewrite-test:latest.release")
+    testImplementation("org.openrewrite:rewrite-test:latest.integration")
 }
 
 tasks.withType(KotlinCompile::class.java).configureEach {

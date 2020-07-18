@@ -26,6 +26,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import org.openrewrite.Formatting;
 import org.openrewrite.internal.StringUtils;
+import org.openrewrite.internal.lang.NonNull;
 import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.java.tree.J;
 import org.slf4j.Logger;
@@ -66,16 +67,19 @@ class ReloadableJava8Parser implements JavaParser {
     private final JavacFileManager pfm;
 
     private final Context context = new Context();
+    private final Collection<JavaStyle> styles;
     private final JavaCompiler compiler;
     private final ResettableLog compilerLog = new ResettableLog(context);
 
     ReloadableJava8Parser(@Nullable List<Path> classpath, Charset charset,
                           boolean relaxedClassTypeMatching,
                           MeterRegistry meterRegistry,
-                          boolean logCompilationWarningsAndErrors) {
+                          boolean logCompilationWarningsAndErrors,
+                          Collection<JavaStyle> styles) {
         this.meterRegistry = meterRegistry;
         this.classpath = classpath;
         this.charset = charset;
+        this.styles = styles;
         this.relaxedClassTypeMatching = relaxedClassTypeMatching;
         this.pfm = new JavacFileManager(context, true, charset);
 
@@ -93,7 +97,7 @@ class ReloadableJava8Parser implements JavaParser {
 
         compilerLog.setWriters(new PrintWriter(new Writer() {
             @Override
-            public void write(char[] cbuf, int off, int len) {
+            public void write(@NonNull char[] cbuf, int off, int len) {
                 String log = new String(Arrays.copyOfRange(cbuf, off, len));
                 if (logCompilationWarningsAndErrors && !StringUtils.isBlank(log)) {
                     logger.warn(log);
@@ -160,7 +164,8 @@ class ReloadableJava8Parser implements JavaParser {
                                 ReloadableJava8ParserVisitor parser = new ReloadableJava8ParserVisitor(
                                         relativeTo == null ? path : relativeTo.relativize(path),
                                         new String(Files.readAllBytes(path), charset),
-                                        relaxedClassTypeMatching);
+                                        relaxedClassTypeMatching,
+                                        styles);
                                 return (J.CompilationUnit) parser.scan(cuByPath.getValue(), Formatting.EMPTY);
                             } catch (IOException e) {
                                 throw new UncheckedIOException(e);

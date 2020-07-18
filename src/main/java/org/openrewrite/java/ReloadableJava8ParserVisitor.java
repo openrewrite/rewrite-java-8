@@ -58,14 +58,16 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Formatting>
     private final Path path;
     private final String source;
     private final boolean relaxedClassTypeMatching;
+    private final Collection<JavaStyle> styles;
 
     private EndPosTable endPosTable;
     private int cursor = 0;
 
-    public ReloadableJava8ParserVisitor(Path path, String source, boolean relaxedClassTypeMatching) {
+    public ReloadableJava8ParserVisitor(Path path, String source, boolean relaxedClassTypeMatching, Collection<JavaStyle> styles) {
         this.path = path;
         this.source = source;
         this.relaxedClassTypeMatching = relaxedClassTypeMatching;
+        this.styles = styles;
     }
 
     @Override
@@ -420,14 +422,15 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Formatting>
 
         return new J.CompilationUnit(randomId(),
                 path.toString(),
-                emptyMap(),
+                emptyList(),
                 packageDecl,
                 convertAll(node.getImports(), semiDelim, semiDelim),
                 convertAll(node.getTypeDecls().stream()
                                 .filter(JCClassDecl.class::isInstance)
                                 .collect(toList()),
                         this::whitespace, noDelim),
-                format(prefix, source.substring(cursor))
+                format(prefix, source.substring(cursor)),
+                styles
         );
     }
 
