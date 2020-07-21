@@ -19,6 +19,7 @@ import com.sun.source.tree.*;
 import com.sun.source.util.TreePathScanner;
 import com.sun.tools.javac.code.Flags;
 import com.sun.tools.javac.code.Symbol;
+import com.sun.tools.javac.code.Type;
 import com.sun.tools.javac.code.TypeTag;
 import com.sun.tools.javac.tree.EndPosTable;
 import com.sun.tools.javac.tree.JCTree;
@@ -333,7 +334,7 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Formatting>
         }
 
         J.ClassDecl.Extends extendings = null;
-        if(node.getExtendsClause() != null) {
+        if (node.getExtendsClause() != null) {
             String extendsPrefix = sourceBefore("extends");
             extendings = new J.ClassDecl.Extends(
                     randomId(),
@@ -343,7 +344,7 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Formatting>
         }
 
         J.ClassDecl.Implements implementings = null;
-        if(node.getImplementsClause() != null && !node.getImplementsClause().isEmpty()) {
+        if (node.getImplementsClause() != null && !node.getImplementsClause().isEmpty()) {
             String implementsPrefix = sourceBefore(kind instanceof J.ClassDecl.Kind.Interface ?
                     "extends" : "implements");
 
@@ -907,7 +908,7 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Formatting>
         TypeTree clazz = endPos(node.getIdentifier()) >= 0 ? convertOrNull(node.getIdentifier()) : null;
 
         J.NewClass.Arguments args = null;
-        if(positionOfNext("(", '{') > -1) {
+        if (positionOfNext("(", '{') > -1) {
             String argPrefix = sourceBefore("(");
             args = new J.NewClass.Arguments(randomId(),
                     node.getArguments().isEmpty() ?
@@ -1439,6 +1440,10 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Formatting>
     private JavaType type(@Nullable com.sun.tools.javac.code.Type type,
                           List<Symbol> stack, boolean shallow) {
         if (type instanceof com.sun.tools.javac.code.Type.ClassType) {
+            if (type instanceof Type.ErrorType) {
+                return null;
+            }
+
             Symbol.ClassSymbol sym = (Symbol.ClassSymbol) type.tsym;
 
             if (stack.contains(sym))
