@@ -265,7 +265,8 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Formatting>
                 })
                 .collect(toList()));
 
-        return new J.Block<>(randomId(), stat, statements, fmt, sourceBefore("}"));
+        return new J.Block<>(randomId(), stat, statements, fmt,
+                new J.Block.End(randomId(), format(sourceBefore("}"))));
     }
 
     @Override
@@ -397,7 +398,8 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Formatting>
                 convertPossibleMultiVariable(membersMultiVariablesSeparated).stream()
         ).collect(toList());
 
-        J.Block<J> body = new J.Block<>(randomId(), null, members, format(bodyPrefix), sourceBefore("}"));
+        J.Block<J> body = new J.Block<>(randomId(), null, members, format(bodyPrefix),
+                new J.Block.End(randomId(), format(sourceBefore("}"))));
 
         return new J.ClassDecl(randomId(), annotations, modifiers, kind, name, typeParams, extendings, implementings, body, type(node), fmt);
     }
@@ -927,7 +929,8 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Formatting>
                     .filter(m -> !(m instanceof JCMethodDecl) || (((JCMethodDecl) m).getModifiers().flags & Flags.GENERATEDCONSTR) == 0L)
                     .collect(toList()), noDelim, noDelim);
 
-            body = new J.Block<>(randomId(), null, members, format(bodyPrefix), sourceBefore("}"));
+            body = new J.Block<>(randomId(), null, members, format(bodyPrefix),
+                    new J.Block.End(randomId(), format(sourceBefore("}"))));
         }
 
         return new J.NewClass(randomId(), clazz, args, body, type(((JCNewClass) node).type), fmt);
@@ -998,7 +1001,8 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Formatting>
         String casePrefix = sourceBefore("{");
         List<J.Case> cases = convertAll(node.getCases(), noDelim, noDelim);
 
-        return new J.Switch(randomId(), selector, new J.Block<>(randomId(), null, cases, format(casePrefix), sourceBefore("}")), fmt);
+        return new J.Switch(randomId(), selector, new J.Block<>(randomId(), null, cases, format(casePrefix),
+                new J.Block.End(randomId(), format(sourceBefore("}")))), fmt);
     }
 
     @Override
