@@ -128,9 +128,7 @@ configure<PublishingExtension> {
 }
 
 configure<SpringBintrayExtension> {
-    // JFrog refuses to allow this to be moved to the openrewrite org.
-    // Can deal with this later if it becomes a problem.
-    org = "jkschneider"
+    org = "openrewrite"
     repo = "maven"
 }
 
