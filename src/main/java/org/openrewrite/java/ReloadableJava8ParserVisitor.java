@@ -904,6 +904,12 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Formatting>
 
     @Override
     public J visitNewClass(NewClassTree node, Formatting fmt) {
+        J.Ident encl = node.getEnclosingExpression() == null ? null : convert(node.getEnclosingExpression());
+
+        if(encl != null) {
+            encl = encl.withSuffix(sourceBefore("."));
+        }
+        String whitespaceBeforeNew = sourceBefore("new");
         skip("new");
 
         // for enum definitions with anonymous class initializers, endPos of node identifier will be -1
@@ -933,7 +939,15 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Formatting>
                     new J.Block.End(randomId(), format(sourceBefore("}"))));
         }
 
-        return new J.NewClass(randomId(), clazz, args, body, type(((JCNewClass) node).type), fmt);
+        return new J.NewClass(
+                randomId(),
+                encl,
+                new J.NewClass.New(UUID.randomUUID(), format(whitespaceBeforeNew)),
+                clazz,
+                args,
+                body,
+                type(((JCNewClass) node).type),
+                fmt);
     }
 
     @Override

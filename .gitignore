@@ -3,3 +3,4 @@ build/
 gradle.properties
 .java-version
 .tools/
+.idea/
