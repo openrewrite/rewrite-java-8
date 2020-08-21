@@ -16,6 +16,7 @@
 package org.openrewrite.java;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.java.tree.J;
 
 import java.io.File;
@@ -37,8 +38,8 @@ public class Java8Parser implements JavaParser {
     }
 
     @Override
-    public List<J.CompilationUnit> parse(List<Path> list, Path path) {
-        return delegate.parse(list, path);
+    public List<J.CompilationUnit> parseInputs(Iterable<Input> sourceFiles, @Nullable Path relativeTo) {
+        return delegate.parseInputs(sourceFiles, relativeTo);
     }
 
     @Override

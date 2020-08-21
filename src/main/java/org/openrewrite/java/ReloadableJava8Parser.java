@@ -33,18 +33,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.tools.JavaFileManager;
-import javax.tools.JavaFileObject;
 import javax.tools.StandardLocation;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toList;
-import static java.util.stream.StreamSupport.stream;
 
 class ReloadableJava8Parser implements JavaParser {
     private static final Logger logger = LoggerFactory.getLogger(ReloadableJava8Parser.class);
@@ -115,7 +113,7 @@ class ReloadableJava8Parser implements JavaParser {
     }
 
     @Override
-    public List<J.CompilationUnit> parse(List<Path> sourceFiles, @Nullable Path relativeTo) {
+    public List<J.CompilationUnit> parseInputs(Iterable<Input> sourceFiles, @Nullable Path relativeTo) {
         if (classpath != null) { // override classpath
             if (context.get(JavaFileManager.class) != pfm) {
                 throw new IllegalStateException("JavaFileManager has been forked unexpectedly");
@@ -128,19 +126,16 @@ class ReloadableJava8Parser implements JavaParser {
             }
         }
 
-        Iterable<? extends JavaFileObject> fileObjects = pfm.getJavaFileObjects(filterSourceFiles(sourceFiles)
-                .stream().map(Path::toFile).toArray(File[]::new));
-        Map<Path, JCTree.JCCompilationUnit> cus = stream(fileObjects.spliterator(), false)
+        Map<Path, JCTree.JCCompilationUnit> cus = acceptedInputs(sourceFiles).stream()
                 .collect(Collectors.toMap(
-                        p -> Paths.get(p.toUri()),
-                        filename -> Timer.builder("rewrite.parse")
+                        Function.identity(),
+                        input -> Timer.builder("rewrite.parse")
                                 .description("The time spent by the JDK in parsing and tokenizing the source file")
                                 .tag("file.type", "Java")
                                 .tag("step", "JDK parsing")
                                 .register(meterRegistry)
-                                .record(() -> compiler.parse(filename)),
-                        (e2, e1) -> e1,
-                        LinkedHashMap::new));
+                                .record(() -> compiler.parse(new ParserInputFileObject(input))),
+                        (e2, e1) -> e1, LinkedHashMap::new));
 
         try {
             enterAll(cus.values());
