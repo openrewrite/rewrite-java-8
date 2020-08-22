@@ -36,4 +36,4 @@ Since rewrite interacts with Java compiler internals, this project must be built
 On more recent JDKs you will run into errors; configuring a more recent JDK to target Java 8 language/bytecode level is not sufficient.
 
 If you, very reasonably, don't want to change your `JAVA_HOME` to point at an old JDK, check out [jenv](https://www.jenv.be/).
-On Mac, Linux, and Windows Subsystem for Linux, jevn allows you to configure JDK usage on a per-project basis.
+On Mac, Linux, and Windows Subsystem for Linux, jenv allows you to configure JDK usage on a per-project basis.

@@ -25,6 +25,7 @@ import com.sun.tools.javac.util.Options;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import org.openrewrite.Formatting;
+import org.openrewrite.Parser;
 import org.openrewrite.internal.StringUtils;
 import org.openrewrite.internal.lang.NonNull;
 import org.openrewrite.internal.lang.Nullable;
@@ -32,11 +33,14 @@ import org.openrewrite.java.tree.J;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.tools.FileObject;
 import javax.tools.JavaFileManager;
 import javax.tools.StandardLocation;
-import java.io.*;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.UncheckedIOException;
+import java.io.Writer;
 import java.nio.charset.Charset;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Function;
@@ -49,8 +53,6 @@ class ReloadableJava8Parser implements JavaParser {
 
     @Nullable
     private final List<Path> classpath;
-
-    private final Charset charset;
 
     private final MeterRegistry meterRegistry;
 
@@ -76,10 +78,14 @@ class ReloadableJava8Parser implements JavaParser {
                           Collection<JavaStyle> styles) {
         this.meterRegistry = meterRegistry;
         this.classpath = classpath;
-        this.charset = charset;
         this.styles = styles;
         this.relaxedClassTypeMatching = relaxedClassTypeMatching;
-        this.pfm = new JavacFileManager(context, true, charset);
+        this.pfm = new JavacFileManager(context, true, charset) {
+            @Override
+            public boolean isSameFile(FileObject fileObject, FileObject fileObject1) {
+                return fileObject.equals(fileObject1);
+            }
+        };
 
         // otherwise, consecutive string literals in binary expressions are concatenated by the parser, losing the original
         // structure of the expression!
@@ -126,7 +132,7 @@ class ReloadableJava8Parser implements JavaParser {
             }
         }
 
-        Map<Path, JCTree.JCCompilationUnit> cus = acceptedInputs(sourceFiles).stream()
+        Map<Parser.Input, JCTree.JCCompilationUnit> cus = acceptedInputs(sourceFiles).stream()
                 .collect(Collectors.toMap(
                         Function.identity(),
                         input -> Timer.builder("rewrite.parse")
@@ -153,18 +159,14 @@ class ReloadableJava8Parser implements JavaParser {
                         .tag("step", "Map to Rewrite AST")
                         .register(meterRegistry)
                         .record(() -> {
-                            Path path = cuByPath.getKey();
-                            logger.trace("Building AST for {}", path.toAbsolutePath().getFileName());
-                            try {
-                                ReloadableJava8ParserVisitor parser = new ReloadableJava8ParserVisitor(
-                                        relativeTo == null ? path : relativeTo.relativize(path),
-                                        new String(Files.readAllBytes(path), charset),
-                                        relaxedClassTypeMatching,
-                                        styles);
-                                return (J.CompilationUnit) parser.scan(cuByPath.getValue(), Formatting.EMPTY);
-                            } catch (IOException e) {
-                                throw new UncheckedIOException(e);
-                            }
+                            Parser.Input input = cuByPath.getKey();
+                            logger.trace("Building AST for {}", input.getPath().getFileName());
+                            ReloadableJava8ParserVisitor parser = new ReloadableJava8ParserVisitor(
+                                    input.getRelativePath(relativeTo),
+                                    StringUtils.readFully(input.getSource()),
+                                    relaxedClassTypeMatching,
+                                    styles);
+                            return (J.CompilationUnit) parser.scan(cuByPath.getValue(), Formatting.EMPTY);
                         })
         ).collect(toList());
     }
@@ -195,11 +197,6 @@ class ReloadableJava8Parser implements JavaParser {
         public void reset() {
             sourceMap.clear();
         }
-    }
-
-    private List<Path> filterSourceFiles(List<Path> sourceFiles) {
-        return sourceFiles.stream().filter(source -> source.getFileName().toString().endsWith(".java"))
-                .collect(Collectors.toList());
     }
 
     private class TimedTodo extends Todo {

@@ -66,6 +66,8 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:latest.release")
 
     testImplementation("org.openrewrite:rewrite-test:latest.integration")
+
+    testRuntimeOnly("ch.qos.logback:logback-classic:1.0.13")
 }
 
 tasks.withType(KotlinCompile::class.java).configureEach {
