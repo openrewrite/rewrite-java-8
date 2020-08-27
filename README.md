@@ -1,5 +1,5 @@
 ![Logo](https://github.com/openrewrite/rewrite/raw/master/doc/logo-oss.png)
-### Eliminate Tech-Debt. Automatically.
+### Semantic code search and transformation
 
 [![Build Status](https://circleci.com/gh/openrewrite/rewrite-java-8.svg?style=shield)](https://circleci.com/gh/openrewrite/rewrite-java-8)
 [![Apache 2.0](https://img.shields.io/github/license/openrewrite/rewrite.svg)](https://www.apache.org/licenses/LICENSE-2.0)
@@ -8,7 +8,6 @@
 ## What is this?
 
 This project provides a Java 8 language parser for [Rewrite](https://github.com/openrewrite/rewrite).
-
 A `JavaParser` can be built for Java 8 with:
 
 ```java
