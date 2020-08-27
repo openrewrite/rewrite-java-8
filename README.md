@@ -19,15 +19,7 @@ JavaParser javaParser = Java8Parser.builder()
 To conditionalize the use of the Java 8 or Java 11 parsers on the version of Java detectable at runtime:
 
 ```java
-JavaParser.Builder<? extends JavaParser, ?> javaParserBuilder;
-if(System.getProperty("java.version").startsWith("1.8")) {
-    javaParserBuilder = Java8Parser.builder();
-}
-else {
-    javaParserBuilder = Java11Parser.builder();
-}
-
-JavaParser javaParser = javaParserBuilder.build();
+JavaParser.fromJavaVersion()
 ```
 
 ## How To Build
