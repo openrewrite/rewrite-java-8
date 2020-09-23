@@ -7,20 +7,11 @@
 
 ## What is this?
 
-This project provides a Java 8 language parser for [Rewrite](https://github.com/openrewrite/rewrite).
-A `JavaParser` can be built for Java 8 with:
+The Rewrite project is a mass refactoring ecosystem for Java and other source code, designed to eliminate technical debt across an engineering organization. It consists of a platform of prepackaged refactoring recipes for common framework migration and stylistic consistency tasks in Java, ready for you to apply in your build via Maven or Gradle plugins.
 
-```java
-JavaParser javaParser = Java8Parser.builder()
-    // additional options like classpath, etc.
-    .build();
-```
+Read the full documentation at [docs.openrewrite.org](https://docs.openrewrite.org/).
 
-To conditionalize the use of the Java 8 or Java 11 parsers on the version of Java detectable at runtime:
-
-```java
-JavaParser.fromJavaVersion()
-```
+Feel free to join us on [Slack](https://join.slack.com/t/rewriteoss/shared_invite/zt-h7bqtyxx-nBjZPdqc9fXBugZKnEOlog)!
 
 ## How To Build
 Since rewrite interacts with Java compiler internals, this project must be built with a Java 8 JDK.
