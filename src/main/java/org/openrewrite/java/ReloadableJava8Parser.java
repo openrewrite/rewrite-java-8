@@ -142,7 +142,7 @@ class ReloadableJava8Parser implements JavaParser {
                                 .register(meterRegistry)
                                 .record(() -> {
                                     try {
-                                        return compiler.parse(new ParserInputFileObject(input));
+                                        return compiler.parse(new Java8ParserInputFileObject(input));
                                     } catch (IllegalStateException e) {
                                         if (e.getMessage().equals("endPosTable already set")) {
                                             throw new IllegalStateException("Call reset() on JavaParser before parsing another" +

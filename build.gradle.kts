@@ -64,6 +64,9 @@ dependencies {
 
     testImplementation("org.junit.jupiter:junit-jupiter-api:latest.release")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:latest.release")
+    // This project needs to be able to co-exist with rewrite-java-11 also on the classpath
+    // So run tests with that circumstance in mind
+    testRuntimeOnly("org.openrewrite:rewrite-java-11:latest.release")
 
     testImplementation("org.openrewrite:rewrite-test:latest.integration")
 
