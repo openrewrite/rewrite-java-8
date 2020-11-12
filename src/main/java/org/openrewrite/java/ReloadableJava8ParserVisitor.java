@@ -906,7 +906,7 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Formatting>
     public J visitNewClass(NewClassTree node, Formatting fmt) {
         Expression encl = node.getEnclosingExpression() == null ? null : convert(node.getEnclosingExpression());
 
-        if(encl != null) {
+        if (encl != null) {
             encl = encl.withSuffix(sourceBefore("."));
         }
         String whitespaceBeforeNew = sourceBefore("new");
@@ -1696,16 +1696,25 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Formatting>
         List<Modifier> sortedModifiers = new ArrayList<>();
 
         boolean inComment = false;
+        boolean inMultilineComment = false;
+
         final AtomicReference<String> word = new AtomicReference<>("");
         for (int i = cursor; i < source.length(); i++) {
             char c = source.charAt(i);
-            if (c == '/' && source.length() > i + 1 && source.charAt(i + 1) == '*') {
-                inComment = true;
+            if (c == '/' && source.length() > i + 1) {
+                char next = source.charAt(i + 1);
+                if (next == '*') {
+                    inMultilineComment = true;
+                } else if (next == '/') {
+                    inComment = true;
+                }
             }
 
-            if (inComment && c == '/' && source.charAt(i - 1) == '*') {
+            if (inMultilineComment && c == '/' && source.charAt(i - 1) == '*') {
+                inMultilineComment = false;
+            } else if (inComment && c == '\n' || c == '\r') {
                 inComment = false;
-            } else if (!inComment) {
+            } else if (!inMultilineComment && !inComment) {
                 if (Character.isWhitespace(c)) {
                     if (!word.get().isEmpty()) {
                         Optional<Modifier> matching = modifiers.getFlags().stream()
