@@ -425,7 +425,7 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Formatting>
         }
 
         return new J.CompilationUnit(randomId(),
-                uri,
+                uri.toString(),
                 emptyList(),
                 packageDecl,
                 convertAll(node.getImports(), semiDelim, semiDelim),
