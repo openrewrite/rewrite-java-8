@@ -22,6 +22,7 @@ import org.openrewrite.java.tree.J;
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.Charset;
@@ -38,7 +39,7 @@ public class Java8Parser implements JavaParser {
     }
 
     @Override
-    public List<J.CompilationUnit> parseInputs(Iterable<Input> sourceFiles, @Nullable Path relativeTo) {
+    public List<J.CompilationUnit> parseInputs(Iterable<Input> sourceFiles, @Nullable URI relativeTo) {
         return delegate.parseInputs(sourceFiles, relativeTo);
     }
 

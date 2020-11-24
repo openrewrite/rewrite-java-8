@@ -40,6 +40,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UncheckedIOException;
 import java.io.Writer;
+import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.*;
@@ -119,7 +120,7 @@ class ReloadableJava8Parser implements JavaParser {
     }
 
     @Override
-    public List<J.CompilationUnit> parseInputs(Iterable<Input> sourceFiles, @Nullable Path relativeTo) {
+    public List<J.CompilationUnit> parseInputs(Iterable<Input> sourceFiles, @Nullable URI relativeTo) {
         if (classpath != null) { // override classpath
             if (context.get(JavaFileManager.class) != pfm) {
                 throw new IllegalStateException("JavaFileManager has been forked unexpectedly");
@@ -170,7 +171,7 @@ class ReloadableJava8Parser implements JavaParser {
                         .register(meterRegistry)
                         .record(() -> {
                             Parser.Input input = cuByPath.getKey();
-                            logger.trace("Building AST for {}", input.getPath().getFileName());
+                            logger.trace("Building AST for {}", input.getUri());
                             ReloadableJava8ParserVisitor parser = new ReloadableJava8ParserVisitor(
                                     input.getRelativePath(relativeTo),
                                     StringUtils.readFully(input.getSource()),
