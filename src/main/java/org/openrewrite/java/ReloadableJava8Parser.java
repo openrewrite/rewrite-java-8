@@ -53,7 +53,7 @@ class ReloadableJava8Parser implements JavaParser {
     private static final Logger logger = LoggerFactory.getLogger(ReloadableJava8Parser.class);
 
     @Nullable
-    private final List<Path> classpath;
+    private final Collection<Path> classpath;
 
     private final MeterRegistry meterRegistry;
 
@@ -65,6 +65,8 @@ class ReloadableJava8Parser implements JavaParser {
      */
     private final boolean relaxedClassTypeMatching;
 
+    private final boolean suppressMappingErrors;
+
     private final JavacFileManager pfm;
 
     private final Context context = new Context();
@@ -72,8 +74,10 @@ class ReloadableJava8Parser implements JavaParser {
     private final JavaCompiler compiler;
     private final ResettableLog compilerLog = new ResettableLog(context);
 
-    ReloadableJava8Parser(@Nullable List<Path> classpath, Charset charset,
+    ReloadableJava8Parser(@Nullable Collection<Path> classpath,
+                          Charset charset,
                           boolean relaxedClassTypeMatching,
+                          boolean suppressMappingErrors,
                           MeterRegistry meterRegistry,
                           boolean logCompilationWarningsAndErrors,
                           Collection<JavaStyle> styles) {
@@ -81,6 +85,7 @@ class ReloadableJava8Parser implements JavaParser {
         this.classpath = classpath;
         this.styles = styles;
         this.relaxedClassTypeMatching = relaxedClassTypeMatching;
+        this.suppressMappingErrors = suppressMappingErrors;
         this.pfm = new JavacFileManager(context, true, charset) {
             @Override
             public boolean isSameFile(FileObject fileObject, FileObject fileObject1) {
@@ -163,23 +168,43 @@ class ReloadableJava8Parser implements JavaParser {
             logger.warn("Failed symbol entering or attribution", t);
         }
 
-        return cus.entrySet().stream().map(cuByPath ->
-                Timer.builder("rewrite.parse")
-                        .description("The time spent mapping the OpenJDK AST to Rewrite's AST")
-                        .tag("file.type", "Java")
-                        .tag("step", "Map to Rewrite AST")
-                        .register(meterRegistry)
-                        .record(() -> {
-                            Parser.Input input = cuByPath.getKey();
-                            logger.trace("Building AST for {}", input.getUri());
-                            ReloadableJava8ParserVisitor parser = new ReloadableJava8ParserVisitor(
-                                    input.getRelativePath(relativeTo),
-                                    StringUtils.readFully(input.getSource()),
-                                    relaxedClassTypeMatching,
-                                    styles);
-                            return (J.CompilationUnit) parser.scan(cuByPath.getValue(), Formatting.EMPTY);
-                        })
-        ).collect(toList());
+        return cus.entrySet().stream()
+                .map(cuByPath -> {
+                    Timer.Sample sample = Timer.start();
+                    Input input = cuByPath.getKey();
+                    logger.trace("Building AST for {}", input.getUri());
+                    try {
+                        ReloadableJava8ParserVisitor parser = new ReloadableJava8ParserVisitor(
+                                input.getRelativePath(relativeTo),
+                                StringUtils.readFully(input.getSource()),
+                                relaxedClassTypeMatching, styles);
+                        J.CompilationUnit cu = (J.CompilationUnit) parser.scan(cuByPath.getValue(), Formatting.EMPTY);
+                        sample.stop(Timer.builder("rewrite.parse")
+                                .description("The time spent mapping the OpenJDK AST to Rewrite's AST")
+                                .tag("file.type", "Java")
+                                .tag("outcome", "success")
+                                .tag("exception", "none")
+                                .tag("step", "Map to Rewrite AST")
+                                .register(meterRegistry));
+                        return cu;
+                    } catch (Throwable t) {
+                        sample.stop(Timer.builder("rewrite.parse")
+                                .description("The time spent mapping the OpenJDK AST to Rewrite's AST")
+                                .tag("file.type", "Java")
+                                .tag("outcome", "error")
+                                .tag("exception", t.getClass().getSimpleName())
+                                .tag("step", "Map to Rewrite AST")
+                                .register(meterRegistry));
+
+                        if (!suppressMappingErrors) {
+                            throw t;
+                        }
+
+                        return null;
+                    }
+                })
+                .filter(Objects::nonNull)
+                .collect(toList());
     }
 
     @Override

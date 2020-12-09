@@ -26,7 +26,6 @@ import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.Charset;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.List;
@@ -111,13 +110,13 @@ public class Java8Parser implements JavaParser {
                         toolsAwareClassLoader);
 
                 Constructor<?> delegateParserConstructor = reloadableParser
-                        .getDeclaredConstructor(List.class, Charset.class, Boolean.TYPE, MeterRegistry.class, Boolean.TYPE,
+                        .getDeclaredConstructor(Collection.class, Charset.class, Boolean.TYPE, Boolean.TYPE, MeterRegistry.class, Boolean.TYPE,
                                 Collection.class);
 
                 delegateParserConstructor.setAccessible(true);
 
                 JavaParser delegate = (JavaParser) delegateParserConstructor
-                        .newInstance(classpath, charset, relaxedClassTypeMatching, meterRegistry, logCompilationWarningsAndErrors, styles);
+                        .newInstance(classpath, charset, relaxedClassTypeMatching, suppressMappingErrors, meterRegistry, logCompilationWarningsAndErrors, styles);
 
                 return new Java8Parser(delegate);
             } catch (Exception e) {
