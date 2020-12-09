@@ -910,8 +910,14 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Formatting>
         if (encl != null) {
             encl = encl.withSuffix(sourceBefore("."));
         }
-        String whitespaceBeforeNew = sourceBefore("new");
-        skip("new");
+
+        String whitespaceBeforeNew = "";
+
+        Tree parent = getCurrentPath().getParentPath().getLeaf();
+        if (!(parent instanceof JCVariableDecl && ((((JCVariableDecl) parent).mods.flags & Flags.ENUM) != 0))) {
+            whitespaceBeforeNew = sourceBefore("new");
+            skip("new");
+        }
 
         // for enum definitions with anonymous class initializers, endPos of node identifier will be -1
         TypeTree clazz = endPos(node.getIdentifier()) >= 0 ? convertOrNull(node.getIdentifier()) : null;

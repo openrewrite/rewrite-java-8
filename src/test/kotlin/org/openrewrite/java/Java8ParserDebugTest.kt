@@ -19,6 +19,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.openrewrite.DebugOnly
 import org.openrewrite.java.tree.ClassDeclTest
 import org.openrewrite.java.tree.CommentTest
+import org.openrewrite.java.tree.EnumTest
 
 @DebugOnly
 @ExtendWith(JavaParserResolver::class)
@@ -27,3 +28,7 @@ class Java8ClassDeclTest: Java8Test(), ClassDeclTest
 @DebugOnly
 @ExtendWith(JavaParserResolver::class)
 class Java8CommentTest: Java8Test(), CommentTest
+
+@DebugOnly
+@ExtendWith(JavaParserResolver::class)
+class Java8EnumTest: Java8Test(), EnumTest
