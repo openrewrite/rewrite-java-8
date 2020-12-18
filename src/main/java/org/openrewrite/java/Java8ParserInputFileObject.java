@@ -31,22 +31,22 @@ import java.util.Objects;
  * other than a file on disk.
  */
 public class Java8ParserInputFileObject implements JavaFileObject {
-    private final Path uri;
+    private final Path path;
     private final Parser.Input input;
 
     public Java8ParserInputFileObject(Parser.Input input) {
         this.input = input;
-        this.uri = input.getPath();
+        this.path = input.getPath();
     }
 
     @Override
     public URI toUri() {
-        return uri.toUri();
+        return path.toUri();
     }
 
     @Override
     public String getName() {
-        return uri.toString();
+        return path.toString();
     }
 
     @Override
@@ -109,11 +109,11 @@ public class Java8ParserInputFileObject implements JavaFileObject {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Java8ParserInputFileObject that = (Java8ParserInputFileObject) o;
-        return uri.equals(that.uri);
+        return path.equals(that.path);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(uri);
+        return Objects.hash(path);
     }
 }

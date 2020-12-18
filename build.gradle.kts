@@ -55,13 +55,9 @@ configurations.all {
 dependencies {
     compileOnly(files("${System.getProperty("java.home")}/../lib/tools.jar"))
 
-    implementation("org.openrewrite:rewrite-java:latest.integration")
+    implementation("org.openrewrite:rewrite-java:latest.release")
 
     implementation("org.slf4j:slf4j-api:1.7.+")
-
-    runtimeOnly("commons-lang:commons-lang:2.6") {
-        isForce = true
-    }
 
     testImplementation("org.jetbrains.kotlin:kotlin-reflect")
     testImplementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
@@ -72,7 +68,7 @@ dependencies {
     // So run tests with that circumstance in mind
     testRuntimeOnly("org.openrewrite:rewrite-java-11:latest.release")
 
-    testImplementation("org.openrewrite:rewrite-test:latest.integration")
+    testImplementation("org.openrewrite:rewrite-test:latest.release")
 
     testRuntimeOnly("ch.qos.logback:logback-classic:1.0.13")
 }
