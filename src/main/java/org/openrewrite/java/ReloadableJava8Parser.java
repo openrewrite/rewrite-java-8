@@ -125,7 +125,7 @@ class ReloadableJava8Parser implements JavaParser {
     }
 
     @Override
-    public List<J.CompilationUnit> parseInputs(Iterable<Input> sourceFiles, @Nullable URI relativeTo) {
+    public List<J.CompilationUnit> parseInputs(Iterable<Input> sourceFiles, @Nullable Path relativeTo) {
         if (classpath != null) { // override classpath
             if (context.get(JavaFileManager.class) != pfm) {
                 throw new IllegalStateException("JavaFileManager has been forked unexpectedly");
@@ -172,7 +172,7 @@ class ReloadableJava8Parser implements JavaParser {
                 .map(cuByPath -> {
                     Timer.Sample sample = Timer.start();
                     Input input = cuByPath.getKey();
-                    logger.trace("Building AST for {}", input.getUri());
+                    logger.trace("Building AST for {}", input);
                     try {
                         ReloadableJava8ParserVisitor parser = new ReloadableJava8ParserVisitor(
                                 input.getRelativePath(relativeTo),

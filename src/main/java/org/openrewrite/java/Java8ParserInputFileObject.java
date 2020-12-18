@@ -31,17 +31,17 @@ import java.util.Objects;
  * other than a file on disk.
  */
 public class Java8ParserInputFileObject implements JavaFileObject {
-    private final URI uri;
+    private final Path uri;
     private final Parser.Input input;
 
     public Java8ParserInputFileObject(Parser.Input input) {
         this.input = input;
-        this.uri = input.getUri();
+        this.uri = input.getPath();
     }
 
     @Override
     public URI toUri() {
-        return uri;
+        return uri.toUri();
     }
 
     @Override
