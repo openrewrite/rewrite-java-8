@@ -1599,7 +1599,7 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Formatting>
                             break;
                         case "*/":
                             inMultiLineComment = false;
-                            delimIndex++;
+                            delimIndex = delimIndex + 2;
                             break;
                     }
                 }
