@@ -11,7 +11,7 @@ The Rewrite project is a mass refactoring ecosystem for Java and other source co
 
 Read the full documentation at [docs.openrewrite.org](https://docs.openrewrite.org/).
 
-Feel free to join us on [Slack](https://join.slack.com/t/rewriteoss/shared_invite/zt-h7bqtyxx-nBjZPdqc9fXBugZKnEOlog)!
+Feel free to join us on [Slack](https://join.slack.com/t/rewriteoss/shared_invite/zt-kpz9t4hw-oWFbOMy~Kxta28qr2uqSFg)!
 
 ## How To Build
 Since rewrite interacts with Java compiler internals, this project must be built with a Java 8 JDK.
