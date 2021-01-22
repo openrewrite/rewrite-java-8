@@ -55,7 +55,7 @@ configurations.all {
 dependencies {
     compileOnly(files("${System.getProperty("java.home")}/../lib/tools.jar"))
 
-    implementation("org.openrewrite:rewrite-java:latest.release")
+    implementation("org.openrewrite:rewrite-java:6.1.15")
 
     implementation("org.slf4j:slf4j-api:1.7.+")
 
@@ -66,9 +66,9 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:latest.release")
     // This project needs to be able to co-exist with rewrite-java-11 also on the classpath
     // So run tests with that circumstance in mind
-    testRuntimeOnly("org.openrewrite:rewrite-java-11:latest.release")
+    testRuntimeOnly("org.openrewrite:rewrite-java-11:6.1.15")
 
-    testImplementation("org.openrewrite:rewrite-test:latest.release")
+    testImplementation("org.openrewrite:rewrite-test:6.1.15")
 
     testRuntimeOnly("ch.qos.logback:logback-classic:1.0.13")
 }
