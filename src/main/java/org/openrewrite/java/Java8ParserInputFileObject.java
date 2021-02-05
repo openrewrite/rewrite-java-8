@@ -41,11 +41,19 @@ public class Java8ParserInputFileObject implements JavaFileObject {
 
     @Override
     public URI toUri() {
+        if (path == null) {
+            //noinspection ConstantConditions
+            return null;
+        }
         return path.toUri();
     }
 
     @Override
     public String getName() {
+        if (path == null) {
+            //noinspection ConstantConditions
+            return null;
+        }
         return path.toString();
     }
 
@@ -70,7 +78,7 @@ public class Java8ParserInputFileObject implements JavaFileObject {
     }
 
     @Override
-    public Writer openWriter() throws IOException {
+    public Writer openWriter() {
         throw new UnsupportedOperationException("Should be no need to write output to this file");
     }
 

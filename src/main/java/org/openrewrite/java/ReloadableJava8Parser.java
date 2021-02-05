@@ -22,14 +22,14 @@ import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.Log;
 import com.sun.tools.javac.util.Options;
-import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.Timer;
-import org.openrewrite.Formatting;
 import org.openrewrite.Parser;
 import org.openrewrite.internal.StringUtils;
 import org.openrewrite.internal.lang.NonNull;
 import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.java.tree.J;
+import org.openrewrite.java.tree.Space;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,8 +55,6 @@ class ReloadableJava8Parser implements JavaParser {
     @Nullable
     private final Collection<Path> classpath;
 
-    private final MeterRegistry meterRegistry;
-
     /**
      * When true, enables a parser to use class types from the in-memory type cache rather than performing
      * a deep equality check. Useful when deep class types have already been built from a separate parsing phase
@@ -78,10 +76,8 @@ class ReloadableJava8Parser implements JavaParser {
                           Charset charset,
                           boolean relaxedClassTypeMatching,
                           boolean suppressMappingErrors,
-                          MeterRegistry meterRegistry,
                           boolean logCompilationWarningsAndErrors,
                           Collection<JavaStyle> styles) {
-        this.meterRegistry = meterRegistry;
         this.classpath = classpath;
         this.styles = styles;
         this.relaxedClassTypeMatching = relaxedClassTypeMatching;
@@ -145,7 +141,7 @@ class ReloadableJava8Parser implements JavaParser {
                                 .description("The time spent by the JDK in parsing and tokenizing the source file")
                                 .tag("file.type", "Java")
                                 .tag("step", "JDK parsing")
-                                .register(meterRegistry)
+                                .register(Metrics.globalRegistry)
                                 .record(() -> {
                                     try {
                                         return compiler.parse(new Java8ParserInputFileObject(input));
@@ -174,18 +170,18 @@ class ReloadableJava8Parser implements JavaParser {
                     Input input = cuByPath.getKey();
                     logger.trace("Building AST for {}", input);
                     try {
-                        ReloadableJava8ParserVisitor parser = new ReloadableJava8ParserVisitor(
+                        Java8ParserVisitor parser = new Java8ParserVisitor(
                                 input.getRelativePath(relativeTo),
                                 StringUtils.readFully(input.getSource()),
                                 relaxedClassTypeMatching, styles);
-                        J.CompilationUnit cu = (J.CompilationUnit) parser.scan(cuByPath.getValue(), Formatting.EMPTY);
+                        J.CompilationUnit cu = (J.CompilationUnit) parser.scan(cuByPath.getValue(), Space.EMPTY);
                         sample.stop(Timer.builder("rewrite.parse")
                                 .description("The time spent mapping the OpenJDK AST to Rewrite's AST")
                                 .tag("file.type", "Java")
                                 .tag("outcome", "success")
                                 .tag("exception", "none")
                                 .tag("step", "Map to Rewrite AST")
-                                .register(meterRegistry));
+                                .register(Metrics.globalRegistry));
                         return cu;
                     } catch (Throwable t) {
                         sample.stop(Timer.builder("rewrite.parse")
@@ -194,7 +190,7 @@ class ReloadableJava8Parser implements JavaParser {
                                 .tag("outcome", "error")
                                 .tag("exception", t.getClass().getSimpleName())
                                 .tag("step", "Map to Rewrite AST")
-                                .register(meterRegistry));
+                                .register(Metrics.globalRegistry));
 
                         if (!suppressMappingErrors) {
                             throw t;
@@ -251,7 +247,7 @@ class ReloadableJava8Parser implements JavaParser {
                         .description("The time spent by the JDK in type attributing the source file")
                         .tag("file.type", "Java")
                         .tag("step", "Type attribution")
-                        .register(meterRegistry));
+                        .register(Metrics.globalRegistry));
             }
             return todo.isEmpty();
         }
