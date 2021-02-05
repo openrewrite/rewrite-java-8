@@ -1574,7 +1574,8 @@ public class Java8ParserVisitor extends TreePathScanner<J, Space> {
                         fields = emptyList();
                     } else {
                         fields = new ArrayList<>();
-                        for (Symbol elem : sym.members_field.getSymbols()) {
+
+                        for (Symbol elem : sym.members_field.getElements()) {
                             if (elem instanceof Symbol.VarSymbol) {
                                 fields.add(new JavaType.Var(
                                         elem.name.toString(),

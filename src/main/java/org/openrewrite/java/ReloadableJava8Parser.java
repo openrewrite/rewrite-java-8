@@ -29,6 +29,8 @@ import org.openrewrite.internal.StringUtils;
 import org.openrewrite.internal.lang.NonNull;
 import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.java.tree.J;
+import org.openrewrite.java.tree.JavaType;
+import org.openrewrite.style.NamedStyles;
 import org.openrewrite.java.tree.Space;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,18 +70,22 @@ class ReloadableJava8Parser implements JavaParser {
     private final JavacFileManager pfm;
 
     private final Context context = new Context();
-    private final Collection<JavaStyle> styles;
+    private final Collection<NamedStyles> styles;
     private final JavaCompiler compiler;
     private final ResettableLog compilerLog = new ResettableLog(context);
+    @Nullable
+    private final LoggingHandler loggingHandler;
 
     ReloadableJava8Parser(@Nullable Collection<Path> classpath,
                           Charset charset,
                           boolean relaxedClassTypeMatching,
                           boolean suppressMappingErrors,
                           boolean logCompilationWarningsAndErrors,
-                          Collection<JavaStyle> styles) {
+                          Collection<NamedStyles> styles,
+                          @Nullable LoggingHandler loggingHandler) {
         this.classpath = classpath;
         this.styles = styles;
+        this.loggingHandler = loggingHandler;
         this.relaxedClassTypeMatching = relaxedClassTypeMatching;
         this.suppressMappingErrors = suppressMappingErrors;
         this.pfm = new JavacFileManager(context, true, charset) {
@@ -173,7 +179,10 @@ class ReloadableJava8Parser implements JavaParser {
                         Java8ParserVisitor parser = new Java8ParserVisitor(
                                 input.getRelativePath(relativeTo),
                                 StringUtils.readFully(input.getSource()),
-                                relaxedClassTypeMatching, styles);
+                                relaxedClassTypeMatching,
+                                styles,
+                                new HashMap<>(),
+                                loggingHandler);
                         J.CompilationUnit cu = (J.CompilationUnit) parser.scan(cuByPath.getValue(), Space.EMPTY);
                         sample.stop(Timer.builder("rewrite.parse")
                                 .description("The time spent mapping the OpenJDK AST to Rewrite's AST")
