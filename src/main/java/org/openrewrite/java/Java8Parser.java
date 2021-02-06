@@ -15,14 +15,13 @@
  */
 package org.openrewrite.java;
 
-import io.micrometer.core.instrument.MeterRegistry;
 import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.java.tree.J;
+import sun.rmi.runtime.Log;
 
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.Charset;
@@ -55,6 +54,7 @@ public class Java8Parser implements JavaParser {
     public static class Builder extends JavaParser.Builder<Java8Parser, Builder> {
         private static ClassLoader toolsClassLoader;
         private static ClassLoader toolsAwareClassLoader;
+        private LoggingHandler loggingHandler;
 
         static synchronized void lazyInitClassLoaders() {
             if(toolsClassLoader != null && toolsAwareClassLoader != null) {
@@ -112,17 +112,22 @@ public class Java8Parser implements JavaParser {
 
                 Constructor<?> delegateParserConstructor = reloadableParser
                         .getDeclaredConstructor(Collection.class, Charset.class, Boolean.TYPE, Boolean.TYPE, Boolean.TYPE,
-                                Collection.class);
+                                Collection.class, LoggingHandler.class);
 
                 delegateParserConstructor.setAccessible(true);
 
                 JavaParser delegate = (JavaParser) delegateParserConstructor
-                        .newInstance(classpath, charset, relaxedClassTypeMatching, suppressMappingErrors, logCompilationWarningsAndErrors, styles);
+                        .newInstance(classpath, charset, relaxedClassTypeMatching, suppressMappingErrors, logCompilationWarningsAndErrors, styles, loggingHandler);
 
                 return new Java8Parser(delegate);
             } catch (Exception e) {
                 throw new IllegalStateException("Unable to construct Java8Parser.", e);
             }
+        }
+
+        public Builder loggingHandler(LoggingHandler loggingHandler) {
+            this.loggingHandler = loggingHandler;
+            return this;
         }
     }
 }

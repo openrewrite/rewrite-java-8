@@ -15,6 +15,6 @@
  */
 package org.openrewrite.java
 
-class Java8SearchCompatibilityTest: JavaSearchCompatibilityKit() {
-    override fun javaParser(): Java8Parser = Java8Parser.builder().build()
+class Java8VisitorCompatibilityTest: JavaVisitorCompatibilityKit() {
+    override fun javaParser(): Java8Parser.Builder = Java8Parser.builder().loggingHandler(TestLoggingHandler())
 }
