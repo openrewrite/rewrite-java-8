@@ -26,7 +26,6 @@ import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.Timer;
 import org.openrewrite.Parser;
 import org.openrewrite.internal.StringUtils;
-import org.openrewrite.internal.lang.NonNull;
 import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.java.tree.J;
 import org.openrewrite.style.NamedStyles;
@@ -103,7 +102,7 @@ class ReloadableJava8Parser implements JavaParser {
 
         compilerLog.setWriters(new PrintWriter(new Writer() {
             @Override
-            public void write(@NonNull char[] cbuf, int off, int len) {
+            public void write(char[] cbuf, int off, int len) {
                 String log = new String(Arrays.copyOfRange(cbuf, off, len));
                 if (logCompilationWarningsAndErrors && !StringUtils.isBlank(log) && loggingHandler != null) {
                     loggingHandler.onWarn(log);
@@ -238,7 +237,7 @@ class ReloadableJava8Parser implements JavaParser {
 
     private class TimedTodo extends Todo {
         private final Todo todo;
-        private Timer.Sample sample;
+        private @Nullable Timer.Sample sample;
 
         private TimedTodo(Todo todo) {
             super(new Context());

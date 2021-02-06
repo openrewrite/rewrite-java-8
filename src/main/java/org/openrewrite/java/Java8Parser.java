@@ -17,7 +17,6 @@ package org.openrewrite.java;
 
 import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.java.tree.J;
-import sun.rmi.runtime.Log;
 
 import java.io.File;
 import java.lang.reflect.Constructor;
@@ -52,9 +51,9 @@ public class Java8Parser implements JavaParser {
     }
 
     public static class Builder extends JavaParser.Builder<Java8Parser, Builder> {
-        private static ClassLoader toolsClassLoader;
-        private static ClassLoader toolsAwareClassLoader;
-        private LoggingHandler loggingHandler;
+        private static @Nullable ClassLoader toolsClassLoader;
+        private static @Nullable ClassLoader toolsAwareClassLoader;
+        private @Nullable LoggingHandler loggingHandler;
 
         static synchronized void lazyInitClassLoaders() {
             if(toolsClassLoader != null && toolsAwareClassLoader != null) {
@@ -101,6 +100,11 @@ public class Java8Parser implements JavaParser {
             }
         }
 
+        public Builder loggingHandler(LoggingHandler loggingHandler) {
+            this.loggingHandler = loggingHandler;
+            return this;
+        }
+
         @Override
         public Java8Parser build() {
             lazyInitClassLoaders();
@@ -125,9 +129,6 @@ public class Java8Parser implements JavaParser {
             }
         }
 
-        public Builder loggingHandler(LoggingHandler loggingHandler) {
-            this.loggingHandler = loggingHandler;
-            return this;
-        }
+
     }
 }
