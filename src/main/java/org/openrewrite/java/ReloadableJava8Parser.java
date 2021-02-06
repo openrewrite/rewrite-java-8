@@ -29,11 +29,8 @@ import org.openrewrite.internal.StringUtils;
 import org.openrewrite.internal.lang.NonNull;
 import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.java.tree.J;
-import org.openrewrite.java.tree.JavaType;
 import org.openrewrite.style.NamedStyles;
 import org.openrewrite.java.tree.Space;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.tools.FileObject;
 import javax.tools.JavaFileManager;
@@ -42,7 +39,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UncheckedIOException;
 import java.io.Writer;
-import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.*;
@@ -52,8 +48,6 @@ import java.util.stream.Collectors;
 import static java.util.stream.Collectors.toList;
 
 class ReloadableJava8Parser implements JavaParser {
-    private static final Logger logger = LoggerFactory.getLogger(ReloadableJava8Parser.class);
-
     @Nullable
     private final Collection<Path> classpath;
 
@@ -111,8 +105,8 @@ class ReloadableJava8Parser implements JavaParser {
             @Override
             public void write(@NonNull char[] cbuf, int off, int len) {
                 String log = new String(Arrays.copyOfRange(cbuf, off, len));
-                if (logCompilationWarningsAndErrors && !StringUtils.isBlank(log)) {
-                    logger.warn(log);
+                if (logCompilationWarningsAndErrors && !StringUtils.isBlank(log) && loggingHandler != null) {
+                    loggingHandler.onWarn(log);
                 }
             }
 
@@ -167,14 +161,16 @@ class ReloadableJava8Parser implements JavaParser {
         } catch (Throwable t) {
             // when symbol entering fails on problems like missing types, attribution can often times proceed
             // unhindered, but it sometimes cannot (so attribution is always a BEST EFFORT in the presence of errors)
-            logger.warn("Failed symbol entering or attribution", t);
+            if(loggingHandler != null) {
+                loggingHandler.onWarn("Failed symbol entering or attribution", t);
+            }
         }
 
         return cus.entrySet().stream()
                 .map(cuByPath -> {
                     Timer.Sample sample = Timer.start();
                     Input input = cuByPath.getKey();
-                    logger.trace("Building AST for {}", input);
+
                     try {
                         Java8ParserVisitor parser = new Java8ParserVisitor(
                                 input.getRelativePath(relativeTo),

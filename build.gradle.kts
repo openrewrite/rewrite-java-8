@@ -57,8 +57,6 @@ dependencies {
 
     implementation("org.openrewrite:rewrite-java:$rewriteVersion")
 
-    implementation("org.slf4j:slf4j-api:1.7.+")
-
     testImplementation("org.jetbrains.kotlin:kotlin-reflect")
     testImplementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 
@@ -69,7 +67,6 @@ dependencies {
     testRuntimeOnly("org.openrewrite:rewrite-java-11:$rewriteVersion")
 
     testImplementation("org.openrewrite:rewrite-test:$rewriteVersion")
-
     testRuntimeOnly("ch.qos.logback:logback-classic:1.0.13")
 }
 
