@@ -15,14 +15,12 @@
  */
 package org.openrewrite.java;
 
-import io.micrometer.core.instrument.MeterRegistry;
 import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.java.tree.J;
 
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.Charset;
@@ -53,11 +51,18 @@ public class Java8Parser implements JavaParser {
     }
 
     public static class Builder extends JavaParser.Builder<Java8Parser, Builder> {
+
+        @Nullable
         private static ClassLoader toolsClassLoader;
+
+        @Nullable
         private static ClassLoader toolsAwareClassLoader;
 
+        @Nullable
+        private LoggingHandler loggingHandler;
+
         static synchronized void lazyInitClassLoaders() {
-            if(toolsClassLoader != null && toolsAwareClassLoader != null) {
+            if (toolsClassLoader != null && toolsAwareClassLoader != null) {
                 return;
             }
 
@@ -101,6 +106,11 @@ public class Java8Parser implements JavaParser {
             }
         }
 
+        public Builder loggingHandler(LoggingHandler loggingHandler) {
+            this.loggingHandler = loggingHandler;
+            return this;
+        }
+
         @Override
         public Java8Parser build() {
             lazyInitClassLoaders();
@@ -111,13 +121,13 @@ public class Java8Parser implements JavaParser {
                         toolsAwareClassLoader);
 
                 Constructor<?> delegateParserConstructor = reloadableParser
-                        .getDeclaredConstructor(Collection.class, Charset.class, Boolean.TYPE, Boolean.TYPE, MeterRegistry.class, Boolean.TYPE,
-                                Collection.class);
+                        .getDeclaredConstructor(Collection.class, Charset.class, Boolean.TYPE, Boolean.TYPE, Boolean.TYPE,
+                                Collection.class, LoggingHandler.class);
 
                 delegateParserConstructor.setAccessible(true);
 
                 JavaParser delegate = (JavaParser) delegateParserConstructor
-                        .newInstance(classpath, charset, relaxedClassTypeMatching, suppressMappingErrors, meterRegistry, logCompilationWarningsAndErrors, styles);
+                        .newInstance(classpath, charset, relaxedClassTypeMatching, suppressMappingErrors, logCompilationWarningsAndErrors, styles, loggingHandler);
 
                 return new Java8Parser(delegate);
             } catch (Exception e) {

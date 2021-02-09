@@ -17,6 +17,7 @@ package org.openrewrite.java;
 
 import org.openrewrite.Parser;
 import org.openrewrite.internal.StringUtils;
+import org.openrewrite.internal.lang.Nullable;
 
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.NestingKind;
@@ -31,7 +32,7 @@ import java.util.Objects;
  * other than a file on disk.
  */
 public class Java8ParserInputFileObject implements JavaFileObject {
-    private final Path path;
+    @Nullable private final Path path;
     private final Parser.Input input;
 
     public Java8ParserInputFileObject(Parser.Input input) {
@@ -41,11 +42,19 @@ public class Java8ParserInputFileObject implements JavaFileObject {
 
     @Override
     public URI toUri() {
+        if (path == null) {
+            //noinspection ConstantConditions
+            return null;
+        }
         return path.toUri();
     }
 
     @Override
     public String getName() {
+        if (path == null) {
+            //noinspection ConstantConditions
+            return null;
+        }
         return path.toString();
     }
 
@@ -70,7 +79,7 @@ public class Java8ParserInputFileObject implements JavaFileObject {
     }
 
     @Override
-    public Writer openWriter() throws IOException {
+    public Writer openWriter() {
         throw new UnsupportedOperationException("Should be no need to write output to this file");
     }
 
@@ -109,6 +118,9 @@ public class Java8ParserInputFileObject implements JavaFileObject {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Java8ParserInputFileObject that = (Java8ParserInputFileObject) o;
+        if (path == null) {
+            return that.path == null;
+        }
         return path.equals(that.path);
     }
 
