@@ -59,7 +59,7 @@ import static org.openrewrite.java.tree.Space.format;
  * This visitor is not thread safe, as it maintains a {@link #cursor} and {@link #endPosTable}
  * for each compilation unit visited.
  */
-public class Java8ParserVisitor extends TreePathScanner<J, Space> {
+public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Space> {
 
     private final Path sourcePath;
     private final String source;
@@ -77,9 +77,9 @@ public class Java8ParserVisitor extends TreePathScanner<J, Space> {
     private static final Pattern whitespacePrefixPattern = Pattern.compile("^\\s*");
     private static final Pattern whitespaceSuffixPattern = Pattern.compile("\\s*[^\\s]+(\\s*)");
 
-    public Java8ParserVisitor(Path sourcePath, String source, boolean relaxedClassTypeMatching,
-                               Collection<NamedStyles> styles, Map<String, JavaType.Class> sharedClassTypes,
-                               @Nullable LoggingHandler loggingHandler) {
+    public ReloadableJava8ParserVisitor(Path sourcePath, String source, boolean relaxedClassTypeMatching,
+                                        Collection<NamedStyles> styles, Map<String, JavaType.Class> sharedClassTypes,
+                                        @Nullable LoggingHandler loggingHandler) {
         this.sourcePath = sourcePath;
         this.source = source;
         this.relaxedClassTypeMatching = relaxedClassTypeMatching;

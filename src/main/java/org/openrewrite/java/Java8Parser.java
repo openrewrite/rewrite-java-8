@@ -51,12 +51,18 @@ public class Java8Parser implements JavaParser {
     }
 
     public static class Builder extends JavaParser.Builder<Java8Parser, Builder> {
-        private static @Nullable ClassLoader toolsClassLoader;
-        private static @Nullable ClassLoader toolsAwareClassLoader;
-        private @Nullable LoggingHandler loggingHandler;
+
+        @Nullable
+        private static ClassLoader toolsClassLoader;
+
+        @Nullable
+        private static ClassLoader toolsAwareClassLoader;
+
+        @Nullable
+        private LoggingHandler loggingHandler;
 
         static synchronized void lazyInitClassLoaders() {
-            if(toolsClassLoader != null && toolsAwareClassLoader != null) {
+            if (toolsClassLoader != null && toolsAwareClassLoader != null) {
                 return;
             }
 
@@ -128,7 +134,5 @@ public class Java8Parser implements JavaParser {
                 throw new IllegalStateException("Unable to construct Java8Parser.", e);
             }
         }
-
-
     }
 }

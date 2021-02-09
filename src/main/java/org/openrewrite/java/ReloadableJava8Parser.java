@@ -171,7 +171,7 @@ class ReloadableJava8Parser implements JavaParser {
                     Input input = cuByPath.getKey();
 
                     try {
-                        Java8ParserVisitor parser = new Java8ParserVisitor(
+                        ReloadableJava8ParserVisitor parser = new ReloadableJava8ParserVisitor(
                                 input.getRelativePath(relativeTo),
                                 StringUtils.readFully(input.getSource()),
                                 relaxedClassTypeMatching,
@@ -235,7 +235,7 @@ class ReloadableJava8Parser implements JavaParser {
         }
     }
 
-    private class TimedTodo extends Todo {
+    private static class TimedTodo extends Todo {
         private final Todo todo;
         private @Nullable Timer.Sample sample;
 
