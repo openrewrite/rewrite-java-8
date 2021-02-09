@@ -32,7 +32,7 @@ import java.util.Objects;
  * other than a file on disk.
  */
 public class Java8ParserInputFileObject implements JavaFileObject {
-    private final @Nullable Path path;
+    @Nullable private final Path path;
     private final Parser.Input input;
 
     public Java8ParserInputFileObject(Parser.Input input) {
@@ -118,7 +118,7 @@ public class Java8ParserInputFileObject implements JavaFileObject {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Java8ParserInputFileObject that = (Java8ParserInputFileObject) o;
-        if(path == null) {
+        if (path == null) {
             return that.path == null;
         }
         return path.equals(that.path);

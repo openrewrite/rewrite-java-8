@@ -51,7 +51,8 @@ configurations.all {
         cacheDynamicVersionsFor(0, TimeUnit.SECONDS)
     }
 }
-val rewriteVersion = "7.0.0-SNAPSHOT"
+
+val rewriteVersion = "latest.integration"
 dependencies {
     compileOnly(files("${System.getProperty("java.home")}/../lib/tools.jar"))
 
