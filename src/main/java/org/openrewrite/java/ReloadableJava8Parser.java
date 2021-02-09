@@ -28,6 +28,7 @@ import org.openrewrite.Parser;
 import org.openrewrite.internal.StringUtils;
 import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.java.tree.J;
+import org.openrewrite.java.tree.JavaType;
 import org.openrewrite.style.NamedStyles;
 import org.openrewrite.java.tree.Space;
 
@@ -165,6 +166,7 @@ class ReloadableJava8Parser implements JavaParser {
             }
         }
 
+        Map<String, JavaType.Class> sharedClassTypes = new HashMap<>();
         return cus.entrySet().stream()
                 .map(cuByPath -> {
                     Timer.Sample sample = Timer.start();
@@ -176,7 +178,7 @@ class ReloadableJava8Parser implements JavaParser {
                                 StringUtils.readFully(input.getSource()),
                                 relaxedClassTypeMatching,
                                 styles,
-                                new HashMap<>(),
+                                sharedClassTypes,
                                 loggingHandler);
                         J.CompilationUnit cu = (J.CompilationUnit) parser.scan(cuByPath.getValue(), Space.EMPTY);
                         sample.stop(Timer.builder("rewrite.parse")
