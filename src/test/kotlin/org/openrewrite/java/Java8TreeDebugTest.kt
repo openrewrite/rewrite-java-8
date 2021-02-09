@@ -37,11 +37,11 @@ class Java8AssertTest: Java8Test, AssertTest
 
 @DebugOnly
 @ExtendWith(JavaParserResolver::class)
-class Java8AssignOpTest: Java8Test, AssignOpTest
+class Java8AssignmentOperationTest: Java8Test, AssignmentOperationTest
 
 @DebugOnly
 @ExtendWith(JavaParserResolver::class)
-class Java8AssignTest: Java8Test, AssignTest
+class Java8AssignmentTest: Java8Test, AssignmentTest
 
 @DebugOnly
 @ExtendWith(JavaParserResolver::class)
@@ -53,7 +53,7 @@ class Java8BreakTest: Java8Test, BreakTest
 
 @DebugOnly
 @ExtendWith(JavaParserResolver::class)
-class Java8ClassDeclTest: Java8Test, ClassDeclTest
+class Java8ClassDeclarationTest: Java8Test, ClassDeclarationTest
 
 @DebugOnly
 @ExtendWith(JavaParserResolver::class)
@@ -85,7 +85,7 @@ class Java8ForEachLoopTest: Java8Test, ForEachLoopTest
 
 @DebugOnly
 @ExtendWith(JavaParserResolver::class)
-class Java8IdentTest: Java8Test, IdentTest
+class Java8IdentifierTest: Java8Test, IdentifierTest
 
 @DebugOnly
 @ExtendWith(JavaParserResolver::class)
@@ -117,7 +117,7 @@ class Java8MemberReferenceTest: Java8Test, MemberReferenceTest
 
 @DebugOnly
 @ExtendWith(JavaParserResolver::class)
-class Java8MethodDeclTest: Java8Test, MethodDeclTest
+class Java8MethodDeclarationTest: Java8Test, MethodDeclarationTest
 
 @DebugOnly
 @ExtendWith(JavaParserResolver::class)
@@ -185,7 +185,7 @@ class Java8UnaryTest: Java8Test, UnaryTest
 
 @DebugOnly
 @ExtendWith(JavaParserResolver::class)
-class Java8VariableDeclsTest: Java8Test, VariableDeclsTest
+class Java8VariableDeclarationsTest: Java8Test, VariableDeclarationsTest
 
 @DebugOnly
 @ExtendWith(JavaParserResolver::class)
