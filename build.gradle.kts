@@ -195,8 +195,3 @@ tasks.withType<GenerateMavenPom> {
         }
     }
 }
-
-// Handful of tests have whitespace-only failures. Disabling this juuuust long enough to get rc3 out
-tasks.named("test") {
-    enabled = false
-}
