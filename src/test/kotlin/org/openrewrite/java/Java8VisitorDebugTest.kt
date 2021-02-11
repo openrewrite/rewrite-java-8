@@ -117,7 +117,7 @@ class Java8OrderImportsTest : Java8Test, OrderImportsTest
 
 @DebugOnly
 @ExtendWith(JavaParserResolver::class)
-class Java8RemoveImportTest : Java8Test, RemoveImportTest
+class Java8RemoveUnusedImportsTest : Java8Test, RemoveUnusedImportsTest
 
 @DebugOnly
 @ExtendWith(JavaParserResolver::class)
