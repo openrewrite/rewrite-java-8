@@ -68,8 +68,7 @@ class ReloadableJava8Parser implements JavaParser {
     private final Collection<NamedStyles> styles;
     private final JavaCompiler compiler;
     private final ResettableLog compilerLog = new ResettableLog(context);
-    @Nullable
-    private final LoggingHandler loggingHandler;
+    private final Listener onParse;
 
     ReloadableJava8Parser(@Nullable Collection<Path> classpath,
                           Charset charset,
@@ -77,10 +76,10 @@ class ReloadableJava8Parser implements JavaParser {
                           boolean suppressMappingErrors,
                           boolean logCompilationWarningsAndErrors,
                           Collection<NamedStyles> styles,
-                          @Nullable LoggingHandler loggingHandler) {
+                          Listener onParse) {
         this.classpath = classpath;
         this.styles = styles;
-        this.loggingHandler = loggingHandler;
+        this.onParse = onParse;
         this.relaxedClassTypeMatching = relaxedClassTypeMatching;
         this.suppressMappingErrors = suppressMappingErrors;
         this.pfm = new JavacFileManager(context, true, charset) {
@@ -106,8 +105,8 @@ class ReloadableJava8Parser implements JavaParser {
             @Override
             public void write(char[] cbuf, int off, int len) {
                 String log = new String(Arrays.copyOfRange(cbuf, off, len));
-                if (logCompilationWarningsAndErrors && !StringUtils.isBlank(log) && loggingHandler != null) {
-                    loggingHandler.onWarn(log);
+                if (logCompilationWarningsAndErrors && !StringUtils.isBlank(log)) {
+                    ReloadableJava8Parser.this.onParse.onWarn(log);
                 }
             }
 
@@ -162,9 +161,8 @@ class ReloadableJava8Parser implements JavaParser {
         } catch (Throwable t) {
             // when symbol entering fails on problems like missing types, attribution can often times proceed
             // unhindered, but it sometimes cannot (so attribution is always a BEST EFFORT in the presence of errors)
-            if (loggingHandler != null) {
-                loggingHandler.onWarn("Failed symbol entering or attribution", t);
-            }
+            onParse.onWarn("Failed symbol entering or attribution", t);
+
         }
 
         Map<String, JavaType.Class> sharedClassTypes = new HashMap<>();
@@ -180,7 +178,7 @@ class ReloadableJava8Parser implements JavaParser {
                                 relaxedClassTypeMatching,
                                 styles,
                                 sharedClassTypes,
-                                loggingHandler);
+                                onParse);
                         J.CompilationUnit cu = (J.CompilationUnit) parser.scan(cuByPath.getValue(), Space.EMPTY);
                         sample.stop(Timer.builder("rewrite.parse")
                                 .description("The time spent mapping the OpenJDK AST to Rewrite's AST")

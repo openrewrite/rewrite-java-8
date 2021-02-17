@@ -18,7 +18,6 @@ package org.openrewrite.java
 import org.junit.jupiter.api.extension.ExtendWith
 import org.openrewrite.DebugOnly
 import org.openrewrite.java.cleanup.*
-import org.openrewrite.java.example.GenerateGetterTest
 import org.openrewrite.java.format.*
 import org.openrewrite.java.search.*
 import org.openrewrite.java.tree.TypeTreeTest
@@ -89,7 +88,7 @@ class Java8FindTypesTest : Java8Test, FindTypesTest
 
 @DebugOnly
 @ExtendWith(JavaParserResolver::class)
-class Java8GenerateGetterTest : Java8Test, GenerateGetterTest
+class Java8HideUtilityClassConstructorTest : Java8Test, HideUtilityClassConstructorTest
 
 @DebugOnly
 @ExtendWith(JavaParserResolver::class)

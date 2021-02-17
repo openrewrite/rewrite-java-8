@@ -16,5 +16,7 @@
 package org.openrewrite.java
 
 interface Java8Test {
-    fun javaParser(): Java8Parser.Builder = Java8Parser.builder().loggingHandler(TestLoggingHandler())
+
+    fun javaParser(): Java8Parser.Builder = Java8Parser.builder()
+        .doOnParse(TestParserListener())
 }

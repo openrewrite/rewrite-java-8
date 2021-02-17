@@ -60,7 +60,7 @@ public class Java8Parser implements JavaParser {
         private static ClassLoader toolsAwareClassLoader;
 
         @Nullable
-        private LoggingHandler loggingHandler;
+        private Listener listener = Listener.NOOP;
 
         static synchronized void lazyInitClassLoaders() {
             if (toolsClassLoader != null && toolsAwareClassLoader != null) {
@@ -107,8 +107,8 @@ public class Java8Parser implements JavaParser {
             }
         }
 
-        public Builder loggingHandler(LoggingHandler loggingHandler) {
-            this.loggingHandler = loggingHandler;
+        public Builder doOnParse(Listener loggingHandler) {
+            this.listener = loggingHandler;
             return this;
         }
 
@@ -123,12 +123,12 @@ public class Java8Parser implements JavaParser {
 
                 Constructor<?> delegateParserConstructor = reloadableParser
                         .getDeclaredConstructor(Collection.class, Charset.class, Boolean.TYPE, Boolean.TYPE, Boolean.TYPE,
-                                Collection.class, LoggingHandler.class);
+                                Collection.class, Listener.class);
 
                 delegateParserConstructor.setAccessible(true);
 
                 JavaParser delegate = (JavaParser) delegateParserConstructor
-                        .newInstance(classpath, charset, relaxedClassTypeMatching, suppressMappingErrors, logCompilationWarningsAndErrors, styles, loggingHandler);
+                        .newInstance(classpath, charset, relaxedClassTypeMatching, suppressMappingErrors, logCompilationWarningsAndErrors, styles, listener);
 
                 return new Java8Parser(delegate);
             } catch (Exception e) {
