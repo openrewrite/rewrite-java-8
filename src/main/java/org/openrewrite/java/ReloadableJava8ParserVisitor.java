@@ -1030,8 +1030,8 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Space> {
                 resourceVar = resourceVar.withPrefix(EMPTY); // moved to the containing Try.Resource
 
                 if (semicolonPresent) {
-                    resourceVar = resourceVar.getPadding().withVars(Space.formatLastSuffix(resourceVar
-                            .getPadding().getVars(), sourceBefore(";")));
+                    resourceVar = resourceVar.getPadding().withVariables(Space.formatLastSuffix(resourceVar
+                            .getPadding().getVariables(), sourceBefore(";")));
                 }
 
                 J.Try.Resource tryResource = new J.Try.Resource(randomId(), resourcePrefix, Markers.EMPTY,
