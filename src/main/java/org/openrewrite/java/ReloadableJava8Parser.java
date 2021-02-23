@@ -25,7 +25,7 @@ import com.sun.tools.javac.util.Options;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.Timer;
 import org.openrewrite.ExecutionContext;
-import org.openrewrite.Parser;
+import org.openrewrite.InMemoryExecutionContext;
 import org.openrewrite.internal.StringUtils;
 import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.java.tree.J;
@@ -67,10 +67,10 @@ class ReloadableJava8Parser implements JavaParser {
 
     private final JavacFileManager pfm;
 
-    private final Context context = new Context();
-    private final Collection<NamedStyles> styles;
+    private final Context context;
     private final JavaCompiler compiler;
-    private final ResettableLog compilerLog = new ResettableLog(context);
+    private final ResettableLog compilerLog;
+    private final Collection<NamedStyles> styles;
     private final Listener onParse;
 
     ReloadableJava8Parser(@Nullable Collection<Path> classpath,
@@ -83,20 +83,32 @@ class ReloadableJava8Parser implements JavaParser {
                           Listener onParse) {
         this.classpath = classpath;
         this.dependsOn = dependsOn;
-        this.styles = styles;
-        this.onParse = onParse;
         this.relaxedClassTypeMatching = relaxedClassTypeMatching;
         this.suppressMappingErrors = suppressMappingErrors;
+        this.styles = styles;
+        this.onParse = onParse;
+
+        this.context = new Context();
+        this.compilerLog = new ResettableLog(context);
         this.pfm = new JavacFileManager(context, true, charset) {
             @Override
             public boolean isSameFile(FileObject fileObject, FileObject fileObject1) {
                 return fileObject.equals(fileObject1);
             }
         };
+        context.put(JavaFileManager.class, this.pfm);
 
         // otherwise, consecutive string literals in binary expressions are concatenated by the parser, losing the original
         // structure of the expression!
         Options.instance(context).put("allowStringFolding", "false");
+        Options.instance(context).put("compilePolicy", "attr");
+
+        // JavaCompiler line 452 (call to ImplicitSourcePolicy.decode(..))
+        Options.instance(context).put("-implicit", "none");
+
+        // https://docs.oracle.com/en/java/javacard/3.1/guide/setting-java-compiler-options.html
+        Options.instance(context).put("-g", "-g");
+        Options.instance(context).put("-proc", "none");
 
         // MUST be created (registered with the context) after pfm and compilerLog
         compiler = new JavaCompiler(context);
@@ -104,7 +116,10 @@ class ReloadableJava8Parser implements JavaParser {
         // otherwise the JavacParser will use EmptyEndPosTable, effectively setting -1 as the end position
         // for every tree element
         compiler.genEndPos = true;
-        compiler.keepComments = true;
+
+        // we don't need either of these, so as a minor performance improvement, omit these compiler features
+        compiler.keepComments = false;
+        compiler.lineDebugInfo = false;
 
         compilerLog.setWriters(new PrintWriter(new Writer() {
             @Override
@@ -123,6 +138,8 @@ class ReloadableJava8Parser implements JavaParser {
             public void close() {
             }
         }));
+
+        compileDependencies();
     }
 
     @Override
@@ -139,13 +156,15 @@ class ReloadableJava8Parser implements JavaParser {
             }
         }
 
-        Map<Parser.Input, JCTree.JCCompilationUnit> cus = acceptedInputs(sourceFiles).stream()
+        LinkedHashMap<Input, JCTree.JCCompilationUnit> cus = acceptedInputs(sourceFiles).stream()
                 .collect(Collectors.toMap(
                         Function.identity(),
                         input -> Timer.builder("rewrite.parse")
                                 .description("The time spent by the JDK in parsing and tokenizing the source file")
                                 .tag("file.type", "Java")
-                                .tag("step", "JDK parsing")
+                                .tag("step", "(1) JDK parsing")
+                                .tag("outcome", "success")
+                                .tag("exception", "none")
                                 .register(Metrics.globalRegistry)
                                 .record(() -> {
                                     try {
@@ -167,7 +186,6 @@ class ReloadableJava8Parser implements JavaParser {
             // when symbol entering fails on problems like missing types, attribution can often times proceed
             // unhindered, but it sometimes cannot (so attribution is always a BEST EFFORT in the presence of errors)
             onParse.onWarn("Failed symbol entering or attribution", t);
-
         }
 
         Map<String, JavaType.Class> sharedClassTypes = new HashMap<>();
@@ -175,7 +193,6 @@ class ReloadableJava8Parser implements JavaParser {
                 .map(cuByPath -> {
                     Timer.Sample sample = Timer.start();
                     Input input = cuByPath.getKey();
-
                     try {
                         ReloadableJava8ParserVisitor parser = new ReloadableJava8ParserVisitor(
                                 input.getRelativePath(relativeTo),
@@ -190,7 +207,7 @@ class ReloadableJava8Parser implements JavaParser {
                                 .tag("file.type", "Java")
                                 .tag("outcome", "success")
                                 .tag("exception", "none")
-                                .tag("step", "Map to Rewrite AST")
+                                .tag("step", "(3) Map to Rewrite AST")
                                 .register(Metrics.globalRegistry));
                         return cu;
                     } catch (Throwable t) {
@@ -199,7 +216,7 @@ class ReloadableJava8Parser implements JavaParser {
                                 .tag("file.type", "Java")
                                 .tag("outcome", "error")
                                 .tag("exception", t.getClass().getSimpleName())
-                                .tag("step", "Map to Rewrite AST")
+                                .tag("step", "(3) Map to Rewrite AST")
                                 .register(Metrics.globalRegistry));
 
                         if (!suppressMappingErrors) {
@@ -219,6 +236,13 @@ class ReloadableJava8Parser implements JavaParser {
         pfm.flush();
         Check.instance(context).compiled.clear();
         return this;
+    }
+
+    private void compileDependencies() {
+        if (dependsOn != null) {
+            parseInputs(dependsOn, null, new InMemoryExecutionContext());
+        }
+        Check.instance(context).compiled.clear();
     }
 
     /**
@@ -256,7 +280,9 @@ class ReloadableJava8Parser implements JavaParser {
                 sample.stop(Timer.builder("rewrite.parse")
                         .description("The time spent by the JDK in type attributing the source file")
                         .tag("file.type", "Java")
-                        .tag("step", "Type attribution")
+                        .tag("step", "(2) Type attribution")
+                        .tag("outcome", "success")
+                        .tag("exception", "none")
                         .register(Metrics.globalRegistry));
             }
             return todo.isEmpty();

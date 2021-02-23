@@ -843,7 +843,9 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Space> {
         JLeftPadded<Expression> defaultValue = node.getDefaultValue() == null ? null :
                 padLeft(sourceBefore("default"), convert(node.getDefaultValue()));
 
-        return new J.MethodDeclaration(randomId(), fmt, Markers.EMPTY, leadingAnnotations, modifiers, typeParams,
+        return new J.MethodDeclaration(randomId(), fmt, Markers.EMPTY,
+                leadingAnnotations,
+                modifiers, typeParams,
                 returnType, name, params, throwss, body, defaultValue,
                 methodType(jcMethod.type, jcMethod.sym, name.getIdentifier().getSimpleName()));
     }
@@ -1612,7 +1614,6 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Space> {
                         fields = emptyList();
                     } else {
                         fields = new ArrayList<>();
-
                         for (Symbol elem : sym.members_field.getElements()) {
                             if (elem instanceof Symbol.VarSymbol) {
                                 fields.add(new JavaType.Variable(

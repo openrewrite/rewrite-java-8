@@ -122,13 +122,13 @@ public class Java8Parser implements JavaParser {
                         toolsAwareClassLoader);
 
                 Constructor<?> delegateParserConstructor = reloadableParser
-                        .getDeclaredConstructor(Collection.class, Charset.class, Boolean.TYPE, Boolean.TYPE, Boolean.TYPE,
+                        .getDeclaredConstructor(Collection.class, Collection.class, Charset.class, Boolean.TYPE, Boolean.TYPE, Boolean.TYPE,
                                 Collection.class, Listener.class);
 
                 delegateParserConstructor.setAccessible(true);
 
                 JavaParser delegate = (JavaParser) delegateParserConstructor
-                        .newInstance(classpath, charset, relaxedClassTypeMatching, suppressMappingErrors, logCompilationWarningsAndErrors, styles, listener);
+                        .newInstance(classpath, dependsOn, charset, relaxedClassTypeMatching, suppressMappingErrors, logCompilationWarningsAndErrors, styles, listener);
 
                 return new Java8Parser(delegate);
             } catch (Exception e) {
