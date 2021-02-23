@@ -341,19 +341,27 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Space> {
 
     @Override
     public J visitClass(ClassTree node, Space fmt) {
-        List<J.Annotation> annotations = convertAll(node.getModifiers().getAnnotations());
-        List<J.Modifier> modifiers = sortedFlags(node.getModifiers());
+        Map<Integer, JCAnnotation> annotationPosTable = new HashMap<>();
+        for (AnnotationTree annotationNode : node.getModifiers().getAnnotations()) {
+            JCAnnotation annotation = (JCAnnotation) annotationNode;
+            annotationPosTable.put(annotation.pos, annotation);
+        }
+        List<J.Annotation> leadingAnnotations = collectAnnotations(annotationPosTable);
 
-        JLeftPadded<J.ClassDeclaration.Kind> kind;
+        List<J.Modifier> modifiers = sortedFlags(node.getModifiers(), annotationPosTable);
+
+        List<J.Annotation> kindAnnotations = collectAnnotations(annotationPosTable);
+
+        J.ClassDeclaration.Kind kind;
         if (hasFlag(node.getModifiers(), Flags.ENUM)) {
-            kind = padLeft(sourceBefore("enum"), J.ClassDeclaration.Kind.Enum);
+            kind = new J.ClassDeclaration.Kind(randomId(), sourceBefore("enum"), Markers.EMPTY, kindAnnotations, J.ClassDeclaration.Kind.Type.Enum);
         } else if (hasFlag(node.getModifiers(), Flags.ANNOTATION)) {
             // note that annotations ALSO have the INTERFACE flag
-            kind = padLeft(sourceBefore("@interface"), J.ClassDeclaration.Kind.Annotation);
+            kind = new J.ClassDeclaration.Kind(randomId(), sourceBefore("@interface"), Markers.EMPTY, kindAnnotations, J.ClassDeclaration.Kind.Type.Annotation);
         } else if (hasFlag(node.getModifiers(), Flags.INTERFACE)) {
-            kind = padLeft(sourceBefore("interface"), J.ClassDeclaration.Kind.Interface);
+            kind = new J.ClassDeclaration.Kind(randomId(), sourceBefore("interface"), Markers.EMPTY, kindAnnotations, J.ClassDeclaration.Kind.Type.Interface);
         } else {
-            kind = padLeft(sourceBefore("class"), J.ClassDeclaration.Kind.Class);
+            kind = new J.ClassDeclaration.Kind(randomId(), sourceBefore("class"), Markers.EMPTY, kindAnnotations, J.ClassDeclaration.Kind.Type.Class);
         }
 
         J.Identifier name = J.Identifier.build(randomId(), sourceBefore(node.getSimpleName().toString()),
@@ -369,7 +377,7 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Space> {
 
         JContainer<TypeTree> implementings = null;
         if (node.getImplementsClause() != null && !node.getImplementsClause().isEmpty()) {
-            Space implementsPrefix = sourceBefore(kind.getElement() == J.ClassDeclaration.Kind.Interface ?
+            Space implementsPrefix = sourceBefore(kind.getType() == J.ClassDeclaration.Kind.Type.Interface ?
                     "extends" : "implements");
 
             implementings = JContainer.build(
@@ -427,7 +435,7 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Space> {
         J.Block body = new J.Block(randomId(), bodyPrefix, Markers.EMPTY, new JRightPadded<>(false, EMPTY, Markers.EMPTY),
                 members, sourceBefore("}"));
 
-        return new J.ClassDeclaration(randomId(), fmt, Markers.EMPTY, annotations, modifiers, kind, name, typeParams, extendings, implementings, body, (JavaType.Class) type(node));
+        return new J.ClassDeclaration(randomId(), fmt, Markers.EMPTY, leadingAnnotations, modifiers, kind, name, typeParams, extendings, implementings, body, (JavaType.Class) type(node));
     }
 
     @Override
@@ -767,20 +775,36 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Space> {
     public J visitMethod(MethodTree node, Space fmt) {
         JCMethodDecl jcMethod = (JCMethodDecl) node;
 
-        List<J.Annotation> annotations = convertAll(node.getModifiers().getAnnotations());
-        List<J.Modifier> modifiers = sortedFlags(node.getModifiers());
+        Map<Integer, JCAnnotation> annotationPosTable = new HashMap<>();
+        for (AnnotationTree annotationNode : node.getModifiers().getAnnotations()) {
+            JCAnnotation annotation = (JCAnnotation) annotationNode;
+            annotationPosTable.put(annotation.pos, annotation);
+        }
+        List<J.Annotation> leadingAnnotations = collectAnnotations(annotationPosTable);
+        List<J.Modifier> modifiers = sortedFlags(node.getModifiers(), annotationPosTable);
 
-        // see https://docs.oracle.com/javase/tutorial/java/generics/methods.html
-        JContainer<J.TypeParameter> typeParams = node.getTypeParameters().isEmpty() ? null :
-                JContainer.build(sourceBefore("<"),
-                        convertAll(node.getTypeParameters(), commaDelim, t -> sourceBefore(">")),
-                        Markers.EMPTY);
+        J.TypeParameters typeParams;
+        if (node.getTypeParameters().isEmpty()) {
+            typeParams = null;
+        } else {
+            List<J.Annotation> typeParamsAnnotations = collectAnnotations(annotationPosTable);
 
+            // see https://docs.oracle.com/javase/tutorial/java/generics/methods.html
+            typeParams = new J.TypeParameters(randomId(), sourceBefore("<"), Markers.EMPTY,
+                    typeParamsAnnotations,
+                    convertAll(node.getTypeParameters(), commaDelim, t -> sourceBefore(">")));
+        }
+
+        List<J.Annotation> returnTypeAnnotations = collectAnnotations(annotationPosTable);
         TypeTree returnType = convertOrNull(node.getReturnType());
+        if (returnType != null && !returnTypeAnnotations.isEmpty()) {
+            returnType = new J.AnnotatedType(randomId(), Space.EMPTY, Markers.EMPTY,
+                    returnTypeAnnotations, returnType);
+        }
 
         Symbol.MethodSymbol nodeSym = jcMethod.sym;
 
-        J.Identifier name;
+        J.MethodDeclaration.IdentifierWithAnnotations name;
         if ("<init>".equals(node.getName().toString())) {
             String owner = null;
             if (nodeSym == null) {
@@ -797,10 +821,10 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Space> {
             } else {
                 owner = jcMethod.sym.owner.name.toString();
             }
-            name = J.Identifier.build(randomId(), sourceBefore(owner), Markers.EMPTY, owner, null);
+            name = new J.MethodDeclaration.IdentifierWithAnnotations(J.Identifier.build(randomId(), sourceBefore(owner), Markers.EMPTY, owner, null), returnType == null ? returnTypeAnnotations : Collections.emptyList());
         } else {
-            name = J.Identifier.build(randomId(), sourceBefore(node.getName().toString()), Markers.EMPTY,
-                    node.getName().toString(), null);
+            name = new J.MethodDeclaration.IdentifierWithAnnotations(J.Identifier.build(randomId(), sourceBefore(node.getName().toString()), Markers.EMPTY,
+                    node.getName().toString(), null), returnType == null ? returnTypeAnnotations : Collections.emptyList());
         }
 
         Space paramFmt = sourceBefore("(");
@@ -819,9 +843,9 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Space> {
         JLeftPadded<Expression> defaultValue = node.getDefaultValue() == null ? null :
                 padLeft(sourceBefore("default"), convert(node.getDefaultValue()));
 
-        return new J.MethodDeclaration(randomId(), fmt, Markers.EMPTY, annotations, modifiers, typeParams,
+        return new J.MethodDeclaration(randomId(), fmt, Markers.EMPTY, leadingAnnotations, modifiers, typeParams,
                 returnType, name, params, throwss, body, defaultValue,
-                methodType(jcMethod.type, jcMethod.sym, name.getSimpleName()));
+                methodType(jcMethod.type, jcMethod.sym, name.getIdentifier().getSimpleName()));
     }
 
     @Override
@@ -1188,16 +1212,23 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Space> {
 
     private J.VariableDeclarations visitVariables(List<VariableTree> nodes, Space fmt) {
         JCTree.JCVariableDecl node = (JCVariableDecl) nodes.get(0);
-        List<J.Annotation> annotations = convertAll(node.getModifiers().annotations);
 
         JCExpression vartype = node.vartype;
 
+        Map<Integer, JCAnnotation> annotationPosTable = new HashMap<>();
+        for (AnnotationTree annotationNode : node.getModifiers().getAnnotations()) {
+            JCAnnotation annotation = (JCAnnotation) annotationNode;
+            annotationPosTable.put(annotation.pos, annotation);
+        }
+        List<J.Annotation> leadingAnnotations = collectAnnotations(annotationPosTable);
         List<J.Modifier> modifiers;
         if (node.getModifiers().pos >= 0) {
-            modifiers = sortedFlags(node.getModifiers());
+            modifiers = sortedFlags(node.getModifiers(), annotationPosTable);
         } else {
             modifiers = emptyList(); // these are implicit modifiers, like "final" on try-with-resources variable declarations
         }
+
+        List<J.Annotation> typeExprAnnotations = collectAnnotations(annotationPosTable);
 
         TypeTree typeExpr;
         if (vartype == null || endPos(vartype) < 0 || vartype instanceof JCErroneous) {
@@ -1211,6 +1242,10 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Space> {
             typeExpr = convert(elementType);
         } else {
             typeExpr = convert(vartype);
+        }
+
+        if (typeExpr != null && !typeExprAnnotations.isEmpty()) {
+            typeExpr = new J.AnnotatedType(randomId(), Space.EMPTY, Markers.EMPTY, typeExprAnnotations, typeExpr);
         }
 
         Supplier<List<JLeftPadded<Space>>> dimensions = () -> {
@@ -1260,7 +1295,7 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Space> {
             );
         }
 
-        return new J.VariableDeclarations(randomId(), fmt, Markers.EMPTY, annotations, modifiers, typeExpr, varargs, beforeDimensions, vars);
+        return new J.VariableDeclarations(randomId(), fmt, Markers.EMPTY, leadingAnnotations, modifiers, typeExpr, varargs, beforeDimensions, vars);
     }
 
     @Override
@@ -1344,6 +1379,7 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Space> {
         return source.substring(0, ((JCTree) tree).getStartPosition()).chars().filter(c -> c == '\n').count() + 1;
     }
 
+    @Nullable
     private <T extends J> T convertOrNull(@Nullable Tree t) {
         return t == null ? null : convert(t);
     }
@@ -1571,7 +1607,7 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Space> {
                     List<Symbol> stackWithSym = new ArrayList<>(stack);
                     stackWithSym.add(sym);
 
-                    List<JavaType.Var> fields;
+                    List<JavaType.Variable> fields;
                     if (sym.members_field == null) {
                         fields = emptyList();
                     } else {
@@ -1579,7 +1615,7 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Space> {
 
                         for (Symbol elem : sym.members_field.getElements()) {
                             if (elem instanceof Symbol.VarSymbol) {
-                                fields.add(new JavaType.Var(
+                                fields.add(new JavaType.Variable(
                                         elem.name.toString(),
                                         type(elem.type, stackWithSym),
                                         filteredFlags(elem)
@@ -1812,6 +1848,15 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Space> {
         return token;
     }
 
+    // return index of next non-whitespace position, without movign cursor
+    private int peekNextTokenIndex() {
+        int c = cursor;
+        while (Character.isWhitespace(source.charAt(c))) {
+            c++;
+        }
+        return c;
+    }
+
     // Only exists as a function to make it easier to debug unexpected cursor shifts
     private void cursor(int n) {
         cursor = n;
@@ -1856,17 +1901,24 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Space> {
      * Modifiers in the order they appear in the source, which is not necessarily the same as the order in
      * which they appear in the OpenJDK AST
      */
-    private List<J.Modifier> sortedFlags(ModifiersTree modifiers) {
+    private List<J.Modifier> sortedFlags(ModifiersTree modifiers, Map<Integer, JCAnnotation> annotationPosTable) {
         if (modifiers.getFlags().isEmpty()) {
             return emptyList();
         }
 
-        ArrayList<Modifier> sortedModifiers = new ArrayList<>();
-
+        List<J.Modifier> sortedModifiers = new ArrayList<>();
+        List<J.Annotation> currentAnnotations = new ArrayList<>();
         boolean inComment = false;
         boolean inMultilineComment = false;
         final AtomicReference<String> word = new AtomicReference<>("");
+        int afterLastModifierCursorPosition = cursor;
         for (int i = cursor; i < source.length(); i++) {
+            int nextTokenIndex = peekNextTokenIndex();
+            if (annotationPosTable.containsKey(nextTokenIndex)) {
+                currentAnnotations.add(convert(annotationPosTable.get(nextTokenIndex)));
+                i = cursor;
+                continue;
+            }
             char c = source.charAt(i);
             if (c == '/' && source.length() > i + 1) {
                 char next = source.charAt(i + 1);
@@ -1893,10 +1945,13 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Space> {
                         }
 
                         if (matching == null) {
+                            this.cursor = afterLastModifierCursorPosition;
                             break;
                         } else {
-                            sortedModifiers.add(matching);
+                            sortedModifiers.add(mapModifier(matching, currentAnnotations));
+                            currentAnnotations = new ArrayList<>();
                             word.set("");
+                            afterLastModifierCursorPosition = cursor;
                         }
                     }
                 } else {
@@ -1904,55 +1959,63 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Space> {
                 }
             }
         }
+        return sortedModifiers;
+    }
 
-        List<J.Modifier> mappedModifiers = new ArrayList<>();
-        for (Modifier mod : sortedModifiers) {
-            Space modFormat = whitespace();
-            cursor += mod.name().length();
-            J.Modifier.Type type;
-            switch (mod) {
-                case DEFAULT:
-                    type = J.Modifier.Type.Default;
-                    break;
-                case PUBLIC:
-                    type = J.Modifier.Type.Public;
-                    break;
-                case PROTECTED:
-                    type = J.Modifier.Type.Protected;
-                    break;
-                case PRIVATE:
-                    type = J.Modifier.Type.Private;
-                    break;
-                case ABSTRACT:
-                    type = J.Modifier.Type.Abstract;
-                    break;
-                case STATIC:
-                    type = J.Modifier.Type.Static;
-                    break;
-                case FINAL:
-                    type = J.Modifier.Type.Final;
-                    break;
-                case NATIVE:
-                    type = J.Modifier.Type.Native;
-                    break;
-                case STRICTFP:
-                    type = J.Modifier.Type.Strictfp;
-                    break;
-                case SYNCHRONIZED:
-                    type = J.Modifier.Type.Synchronized;
-                    break;
-                case TRANSIENT:
-                    type = J.Modifier.Type.Transient;
-                    break;
-                case VOLATILE:
-                    type = J.Modifier.Type.Volatile;
-                    break;
-                default:
-                    throw new IllegalArgumentException("Unexpected modifier " + mod);
-            }
-            mappedModifiers.add(new J.Modifier(randomId(), modFormat, Markers.EMPTY, type));
+    private J.Modifier mapModifier(Modifier mod, List<J.Annotation> annotations) {
+        Space modFormat = whitespace();
+        cursor += mod.name().length();
+        J.Modifier.Type type;
+        switch (mod) {
+            case DEFAULT:
+                type = J.Modifier.Type.Default;
+                break;
+            case PUBLIC:
+                type = J.Modifier.Type.Public;
+                break;
+            case PROTECTED:
+                type = J.Modifier.Type.Protected;
+                break;
+            case PRIVATE:
+                type = J.Modifier.Type.Private;
+                break;
+            case ABSTRACT:
+                type = J.Modifier.Type.Abstract;
+                break;
+            case STATIC:
+                type = J.Modifier.Type.Static;
+                break;
+            case FINAL:
+                type = J.Modifier.Type.Final;
+                break;
+            case NATIVE:
+                type = J.Modifier.Type.Native;
+                break;
+            case STRICTFP:
+                type = J.Modifier.Type.Strictfp;
+                break;
+            case SYNCHRONIZED:
+                type = J.Modifier.Type.Synchronized;
+                break;
+            case TRANSIENT:
+                type = J.Modifier.Type.Transient;
+                break;
+            case VOLATILE:
+                type = J.Modifier.Type.Volatile;
+                break;
+            default:
+                throw new IllegalArgumentException("Unexpected modifier " + mod);
         }
+        return new J.Modifier(randomId(), modFormat, Markers.EMPTY, type, annotations);
+    }
 
-        return mappedModifiers;
+    private List<J.Annotation> collectAnnotations(Map<Integer, JCAnnotation> annotationPosTable) {
+        List<J.Annotation> annotations = new ArrayList<>();
+        int nextTokenIndex = peekNextTokenIndex();
+        while (annotationPosTable.containsKey(nextTokenIndex)) {
+            annotations.add(convert(annotationPosTable.get(nextTokenIndex)));
+            nextTokenIndex = peekNextTokenIndex();
+        }
+        return annotations;
     }
 }

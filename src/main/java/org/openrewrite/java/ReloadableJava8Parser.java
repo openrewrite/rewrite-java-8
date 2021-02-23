@@ -52,6 +52,9 @@ class ReloadableJava8Parser implements JavaParser {
     @Nullable
     private final Collection<Path> classpath;
 
+    @Nullable
+    private final Collection<Input> dependsOn;
+
     /**
      * When true, enables a parser to use class types from the in-memory type cache rather than performing
      * a deep equality check. Useful when deep class types have already been built from a separate parsing phase
@@ -71,6 +74,7 @@ class ReloadableJava8Parser implements JavaParser {
     private final Listener onParse;
 
     ReloadableJava8Parser(@Nullable Collection<Path> classpath,
+                          @Nullable Collection<Input> dependsOn,
                           Charset charset,
                           boolean relaxedClassTypeMatching,
                           boolean suppressMappingErrors,
@@ -78,6 +82,7 @@ class ReloadableJava8Parser implements JavaParser {
                           Collection<NamedStyles> styles,
                           Listener onParse) {
         this.classpath = classpath;
+        this.dependsOn = dependsOn;
         this.styles = styles;
         this.onParse = onParse;
         this.relaxedClassTypeMatching = relaxedClassTypeMatching;
