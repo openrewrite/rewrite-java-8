@@ -44,7 +44,7 @@ jobs:
         timeout-minutes: 30
         run: ./gradlew ${GRADLE_SWITCHES} snapshot publish
         env:
-          OSSRH_TOKEN: ${{ secrets.OSSRH_TOKEN }}
-          OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          OSSRH_TOKEN: "${{ secrets.OSSRH_TOKEN }}"
+          OSSRH_USERNAME: "${{ secrets.OSSRH_USERNAME }}"
           SIGNING_KEY: ${{ secrets.OSSRH_SIGNING_KEY }}
           SIGNING_PASSWORD: ${{ secrets.OSSRH_SIGNING_PASSWORD }}
