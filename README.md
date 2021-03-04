@@ -14,6 +14,7 @@ Read the full documentation at [docs.openrewrite.org](https://docs.openrewrite.o
 Feel free to join us on [Slack](https://join.slack.com/t/rewriteoss/shared_invite/zt-kpz9t4hw-oWFbOMy~Kxta28qr2uqSFg)!
 
 ## How To Build
+
 Since rewrite interacts with Java compiler internals, this project must be built with a Java 8 JDK.
 On more recent JDKs you will run into errors; configuring a more recent JDK to target Java 8 language/bytecode level is not sufficient.
 
