@@ -50,7 +50,7 @@ import static java.util.stream.Collectors.toList;
 
 class ReloadableJava8Parser implements JavaParser {
     @Nullable
-    private final Collection<Path> classpath;
+    private Collection<Path> classpath;
 
     @Nullable
     private final Collection<Input> dependsOn;
@@ -236,6 +236,11 @@ class ReloadableJava8Parser implements JavaParser {
         pfm.flush();
         Check.instance(context).compiled.clear();
         return this;
+    }
+
+    @Override
+    public void setClasspath(Collection<Path> classpath) {
+        this.classpath = classpath;
     }
 
     private void compileDependencies() {

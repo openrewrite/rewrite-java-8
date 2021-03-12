@@ -47,6 +47,11 @@ public class Java8Parser implements JavaParser {
         return delegate.reset();
     }
 
+    @Override
+    public void setClasspath(Collection<Path> classpath) {
+        delegate.setClasspath(classpath);
+    }
+
     public static Builder builder() {
         return new Builder();
     }
