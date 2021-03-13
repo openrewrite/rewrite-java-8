@@ -67,7 +67,7 @@ configurations.all {
     }
 }
 
-val rewriteVersion = "latest.release"
+val rewriteVersion = "latest.integration"
 dependencies {
     compileOnly(files("${System.getProperty("java.home")}/../lib/tools.jar"))
 
