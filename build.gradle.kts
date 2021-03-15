@@ -41,6 +41,9 @@ description = "Eliminate technical debt. Automatically (for Java 8)."
 
 repositories {
     mavenLocal()
+    maven {
+        url = uri("https://oss.sonatype.org/content/repositories/snapshots/")
+    }
     mavenCentral()
 }
 
