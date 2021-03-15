@@ -16,7 +16,5 @@
 package org.openrewrite.java
 
 class Java8TreeCompatibilityTest: JavaTreeCompatibilityKit() {
-
     override fun javaParser(): Java8Parser.Builder = Java8Parser.builder()
-        .doOnParse(TestParserListener())
 }

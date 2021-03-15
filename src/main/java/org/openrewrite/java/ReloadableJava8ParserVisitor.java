@@ -25,7 +25,7 @@ import com.sun.tools.javac.code.TypeTag;
 import com.sun.tools.javac.tree.EndPosTable;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.JCTree.*;
-import org.openrewrite.Parser;
+import org.openrewrite.ExecutionContext;
 import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.java.tree.*;
 import org.openrewrite.marker.Markers;
@@ -67,7 +67,7 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Space> {
     private final boolean relaxedClassTypeMatching;
     private final Collection<NamedStyles> styles;
     private final Map<String, JavaType.Class> sharedClassTypes;
-    private final Parser.Listener onParse;
+    private final ExecutionContext ctx;
 
     @SuppressWarnings("NotNullFieldNotInitialized")
     private EndPosTable endPosTable;
@@ -79,13 +79,13 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Space> {
 
     public ReloadableJava8ParserVisitor(Path sourcePath, String source, boolean relaxedClassTypeMatching,
                                         Collection<NamedStyles> styles, Map<String, JavaType.Class> sharedClassTypes,
-                                        Parser.Listener onParse) {
+                                        ExecutionContext ctx) {
         this.sourcePath = sourcePath;
         this.source = source;
         this.relaxedClassTypeMatching = relaxedClassTypeMatching;
         this.styles = styles;
         this.sharedClassTypes = sharedClassTypes;
-        this.onParse = onParse;
+        this.ctx = ctx;
     }
 
     @Override
@@ -1345,8 +1345,26 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Space> {
             return j;
         } catch (Throwable ex) {
             // this SHOULD never happen, but is here simply as a diagnostic measure in the event of unexpected exceptions
-            onParse.onError("Failed to convert " + t.getClass().getSimpleName() + " for the following cursor stack:");
-            logCurrentPathAsError();
+            StringBuilder message = new StringBuilder("Failed to convert for the following cursor stack:");
+            message.append("--- BEGIN PATH ---\n");
+
+            List<Tree> paths = stream(getCurrentPath().spliterator(), false).collect(toList());
+            for (int i = paths.size(); i-- > 0; ) {
+                JCTree tree = (JCTree) paths.get(i);
+                if (tree instanceof JCCompilationUnit) {
+                    message.append("JCCompilationUnit(sourceFile = ").append(((JCCompilationUnit) tree).sourcefile.getName()).append(")\n");
+                } else if (tree instanceof JCClassDecl) {
+                    message.append("JCClassDecl(name = ").append(((JCClassDecl) tree).name).append(", line = ").append(lineNumber(tree)).append(")\n");
+                } else if (tree instanceof JCVariableDecl) {
+                    message.append("JCVariableDecl(name = ").append(((JCVariableDecl) tree).name).append(", line = ").append(lineNumber(tree)).append(")\n");
+                } else {
+                    message.append(tree.getClass().getSimpleName()).append("(line = ").append(lineNumber(tree)).append(")\n");
+                }
+            }
+
+            message.append("--- END PATH ---\n");
+
+            ctx.getOnError().accept(new JavaParsingException(message.toString(), ex));
             throw ex;
         }
     }
@@ -1356,26 +1374,6 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Space> {
         JRightPadded<J2> rightPadded = j == null ? null : new JRightPadded<>(j, suffix.apply(t), Markers.EMPTY);
         cursor(max(endPos(t), cursor)); // if there is a non-empty suffix, the cursor may have already moved past it
         return rightPadded;
-    }
-
-    private void logCurrentPathAsError() {
-        onParse.onError("--- BEGIN PATH ---");
-
-        List<Tree> paths = stream(getCurrentPath().spliterator(), false).collect(toList());
-        for (int i = paths.size(); i-- > 0; ) {
-            JCTree tree = (JCTree) paths.get(i);
-            if (tree instanceof JCCompilationUnit) {
-                onParse.onError("JCCompilationUnit(sourceFile = " + ((JCCompilationUnit) tree).sourcefile.getName() + ")");
-            } else if (tree instanceof JCClassDecl) {
-                onParse.onError("JCClassDecl(name = " + ((JCClassDecl) tree).name + ", line = " + lineNumber(tree) + ")");
-            } else if (tree instanceof JCVariableDecl) {
-                onParse.onError("JCVariableDecl(name = " + ((JCVariableDecl) tree).name + ", line = " + lineNumber(tree) + ")");
-            } else {
-                onParse.onError(tree.getClass().getSimpleName() + "(line = " + lineNumber(tree) + ")");
-            }
-        }
-
-        onParse.onError("--- END PATH ---");
     }
 
     private long lineNumber(Tree tree) {

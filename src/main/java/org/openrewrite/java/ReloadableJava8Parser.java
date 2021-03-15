@@ -26,6 +26,7 @@ import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.Timer;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.InMemoryExecutionContext;
+import org.openrewrite.internal.MetricsHelper;
 import org.openrewrite.internal.StringUtils;
 import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.java.tree.J;
@@ -63,30 +64,23 @@ class ReloadableJava8Parser implements JavaParser {
      */
     private final boolean relaxedClassTypeMatching;
 
-    private final boolean suppressMappingErrors;
-
     private final JavacFileManager pfm;
 
     private final Context context;
     private final JavaCompiler compiler;
     private final ResettableLog compilerLog;
     private final Collection<NamedStyles> styles;
-    private final Listener onParse;
 
     ReloadableJava8Parser(@Nullable Collection<Path> classpath,
                           @Nullable Collection<Input> dependsOn,
                           Charset charset,
                           boolean relaxedClassTypeMatching,
-                          boolean suppressMappingErrors,
                           boolean logCompilationWarningsAndErrors,
-                          Collection<NamedStyles> styles,
-                          Listener onParse) {
+                          Collection<NamedStyles> styles) {
         this.classpath = classpath;
         this.dependsOn = dependsOn;
         this.relaxedClassTypeMatching = relaxedClassTypeMatching;
-        this.suppressMappingErrors = suppressMappingErrors;
         this.styles = styles;
-        this.onParse = onParse;
 
         this.context = new Context();
         this.compilerLog = new ResettableLog(context);
@@ -126,7 +120,7 @@ class ReloadableJava8Parser implements JavaParser {
             public void write(char[] cbuf, int off, int len) {
                 String log = new String(Arrays.copyOfRange(cbuf, off, len));
                 if (logCompilationWarningsAndErrors && !StringUtils.isBlank(log)) {
-                    ReloadableJava8Parser.this.onParse.onWarn(log);
+                    org.slf4j.LoggerFactory.getLogger(ReloadableJava8Parser.class).warn(log);
                 }
             }
 
@@ -159,12 +153,11 @@ class ReloadableJava8Parser implements JavaParser {
         LinkedHashMap<Input, JCTree.JCCompilationUnit> cus = acceptedInputs(sourceFiles).stream()
                 .collect(Collectors.toMap(
                         Function.identity(),
-                        input -> Timer.builder("rewrite.parse")
-                                .description("The time spent by the JDK in parsing and tokenizing the source file")
-                                .tag("file.type", "Java")
-                                .tag("step", "(1) JDK parsing")
-                                .tag("outcome", "success")
-                                .tag("exception", "none")
+                        input -> MetricsHelper.successTags(
+                                Timer.builder("rewrite.parse")
+                                        .description("The time spent by the JDK in parsing and tokenizing the source file")
+                                        .tag("file.type", "Java")
+                                        .tag("step", "(1) JDK parsing"))
                                 .register(Metrics.globalRegistry)
                                 .record(() -> {
                                     try {
@@ -185,7 +178,7 @@ class ReloadableJava8Parser implements JavaParser {
         } catch (Throwable t) {
             // when symbol entering fails on problems like missing types, attribution can often times proceed
             // unhindered, but it sometimes cannot (so attribution is always a BEST EFFORT in the presence of errors)
-            onParse.onWarn("Failed symbol entering or attribution", t);
+            ctx.getOnError().accept(new JavaParsingException("Failed symbol entering or attribution", t));
         }
 
         Map<String, JavaType.Class> sharedClassTypes = new HashMap<>();
@@ -200,29 +193,24 @@ class ReloadableJava8Parser implements JavaParser {
                                 relaxedClassTypeMatching,
                                 styles,
                                 sharedClassTypes,
-                                onParse);
+                                ctx);
                         J.CompilationUnit cu = (J.CompilationUnit) parser.scan(cuByPath.getValue(), Space.EMPTY);
-                        sample.stop(Timer.builder("rewrite.parse")
-                                .description("The time spent mapping the OpenJDK AST to Rewrite's AST")
-                                .tag("file.type", "Java")
-                                .tag("outcome", "success")
-                                .tag("exception", "none")
-                                .tag("step", "(3) Map to Rewrite AST")
+                        sample.stop(MetricsHelper.successTags(
+                                Timer.builder("rewrite.parse")
+                                        .description("The time spent mapping the OpenJDK AST to Rewrite's AST")
+                                        .tag("file.type", "Java")
+                                        .tag("step", "(3) Map to Rewrite AST"))
                                 .register(Metrics.globalRegistry));
                         return cu;
                     } catch (Throwable t) {
-                        sample.stop(Timer.builder("rewrite.parse")
-                                .description("The time spent mapping the OpenJDK AST to Rewrite's AST")
-                                .tag("file.type", "Java")
-                                .tag("outcome", "error")
-                                .tag("exception", t.getClass().getSimpleName())
-                                .tag("step", "(3) Map to Rewrite AST")
+                        sample.stop(MetricsHelper.errorTags(
+                                Timer.builder("rewrite.parse")
+                                        .description("The time spent mapping the OpenJDK AST to Rewrite's AST")
+                                        .tag("file.type", "Java")
+                                        .tag("step", "(3) Map to Rewrite AST"), t)
                                 .register(Metrics.globalRegistry));
 
-                        if (!suppressMappingErrors) {
-                            throw t;
-                        }
-
+                        ctx.getOnError().accept(t);
                         return null;
                     }
                 })
@@ -282,12 +270,11 @@ class ReloadableJava8Parser implements JavaParser {
         @Override
         public boolean isEmpty() {
             if (sample != null) {
-                sample.stop(Timer.builder("rewrite.parse")
-                        .description("The time spent by the JDK in type attributing the source file")
-                        .tag("file.type", "Java")
-                        .tag("step", "(2) Type attribution")
-                        .tag("outcome", "success")
-                        .tag("exception", "none")
+                sample.stop(MetricsHelper.successTags(
+                        Timer.builder("rewrite.parse")
+                                .description("The time spent by the JDK in type attributing the source file")
+                                .tag("file.type", "Java")
+                                .tag("step", "(2) Type attribution"))
                         .register(Metrics.globalRegistry));
             }
             return todo.isEmpty();
