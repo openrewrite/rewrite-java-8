@@ -31,6 +31,7 @@ plugins {
     id("nebula.source-jar") version "17.3.2"
     id("nebula.maven-apache-license") version "17.3.2"
 }
+apply(plugin = "nebula.publish-verification")
 
 configure<nebula.plugin.release.git.base.ReleasePluginExtension> {
     defaultVersionStrategy = nebula.plugin.release.NetflixOssStrategies.SNAPSHOT(project)
@@ -70,7 +71,7 @@ configurations.all {
     }
 }
 
-val rewriteVersion = "latest.integration"
+val rewriteVersion = "latest.release"
 dependencies {
     compileOnly(files("${System.getProperty("java.home")}/../lib/tools.jar"))
     compileOnly("org.slf4j:slf4j-api:1.7.+")
