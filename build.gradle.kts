@@ -30,11 +30,18 @@ plugins {
     id("nebula.javadoc-jar") version "17.3.2"
     id("nebula.source-jar") version "17.3.2"
     id("nebula.maven-apache-license") version "17.3.2"
+
+    id("org.openrewrite.rewrite") version "4.0.0"
 }
+
 apply(plugin = "nebula.publish-verification")
 
 configure<nebula.plugin.release.git.base.ReleasePluginExtension> {
     defaultVersionStrategy = nebula.plugin.release.NetflixOssStrategies.SNAPSHOT(project)
+}
+
+configure<org.openrewrite.gradle.RewriteExtension> {
+    activeRecipe("org.openrewrite.java.format.AutoFormat")
 }
 
 group = "org.openrewrite"
