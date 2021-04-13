@@ -1487,34 +1487,6 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Space> {
         return converted;
     }
 
-    /**
-     * --------------
-     * Type conversion
-     * --------------
-     */
-    private final Map<Long, Flag> flagMasks = Stream.of(
-            new AbstractMap.SimpleEntry<>(1L, Flag.Public),
-            new AbstractMap.SimpleEntry<>(1L << 1, Flag.Private),
-            new AbstractMap.SimpleEntry<>(1L << 2, Flag.Protected),
-            new AbstractMap.SimpleEntry<>(1L << 3, Flag.Static),
-            new AbstractMap.SimpleEntry<>(1L << 4, Flag.Final),
-            new AbstractMap.SimpleEntry<>(1L << 5, Flag.Synchronized),
-            new AbstractMap.SimpleEntry<>(1L << 6, Flag.Volatile),
-            new AbstractMap.SimpleEntry<>(1L << 7, Flag.Transient),
-            new AbstractMap.SimpleEntry<>(1L << 10, Flag.Abstract)
-    ).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-
-    private Set<Flag> filteredFlags(Symbol sym) {
-        Set<Flag> set = new HashSet<>();
-        for (Map.Entry<Long, Flag> mask : flagMasks.entrySet()) {
-            if ((sym.flags() & mask.getKey()) != 0L) {
-                Flag value = mask.getValue();
-                set.add(value);
-            }
-        }
-        return set;
-    }
-
     @Nullable
     private JavaType.Method methodType(Type selectType, @Nullable Symbol symbol, String methodName) {
         // if the symbol is not a method symbol, there is a parser error in play
@@ -1558,7 +1530,8 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Space> {
                     genericSignature,
                     signature.apply(selectType),
                     paramNames,
-                    filteredFlags(genericSymbol)
+                    //Currently only the first 16 bits are meaninful
+                    (int) genericSymbol.flags() & 0xFFFF
             );
         }
 
@@ -1618,7 +1591,8 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Space> {
                                 fields.add(new JavaType.Variable(
                                         elem.name.toString(),
                                         type(elem.type, stackWithSym),
-                                        filteredFlags(elem)
+                                        //Currently only the first 16 bits are meaninful
+                                        (int) elem.flags() & 0xFFFF
                                 ));
                             }
                         }
@@ -1653,13 +1627,37 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Space> {
                         }
                     }
 
+                    JavaType.Class.Kind kind;
+                    switch (sym.getKind()) {
+                        case ENUM:
+                            kind = JavaType.Class.Kind.Enum;
+                            break;
+                        case ANNOTATION_TYPE:
+                            kind = JavaType.Class.Kind.Annotation;
+                            break;
+                        case INTERFACE:
+                            kind = JavaType.Class.Kind.Interface;
+                            break;
+                        default:
+                            kind = JavaType.Class.Kind.Class;
+                    }
+
+                    JavaType.Class owner = null;
+                    if (sym.owner instanceof Symbol.ClassSymbol) {
+                        owner = TypeUtils.asClass(type(sym.owner.type, stackWithSym));
+                    }
+
                     JavaType.Class clazz = JavaType.Class.build(
                             sym.className(),
+                            //Currently only the first 16 bits are meaninful
+                            (int) sym.flags() & 0xFFFF,
+                            kind,
                             fields,
                             typeParameters,
                             interfaces,
                             null,
                             TypeUtils.asClass(type(classType.supertype_field, stackWithSym)),
+                            owner,
                             relaxedClassTypeMatching);
 
                     sharedClassTypes.put(sym.className(), clazz);
