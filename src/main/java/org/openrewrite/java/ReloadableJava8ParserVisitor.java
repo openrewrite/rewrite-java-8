@@ -453,13 +453,13 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Space> {
                 annotationPosTable.put(annotation.pos, annotation);
             }
         }
-        List<J.Annotation> kindAnnotations = annotationPosTable.isEmpty() ? null : collectAnnotations(annotationPosTable);
+        List<J.Annotation> packageAnnotations = annotationPosTable.isEmpty() ? null : collectAnnotations(annotationPosTable);
 
         J.Package packageDecl = null;
         if (cu.getPackageName() != null) {
             Space packagePrefix = sourceBefore("package");
             packageDecl = new J.Package(randomId(), packagePrefix, Markers.EMPTY,
-                    convert(cu.getPackageName()), kindAnnotations);
+                    convert(cu.getPackageName()), packageAnnotations);
         }
 
         return new J.CompilationUnit(
