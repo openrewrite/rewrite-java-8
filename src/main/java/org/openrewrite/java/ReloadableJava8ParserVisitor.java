@@ -447,13 +447,11 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Space> {
         endPosTable = cu.endPositions;
 
         Map<Integer, JCAnnotation> annotationPosTable = new HashMap<>();
-        if (node.getPackageAnnotations() != null) {
-            for (AnnotationTree annotationNode : node.getPackageAnnotations()) {
-                JCAnnotation annotation = (JCAnnotation) annotationNode;
-                annotationPosTable.put(annotation.pos, annotation);
-            }
+        for (AnnotationTree annotationNode : node.getPackageAnnotations()) {
+            JCAnnotation annotation = (JCAnnotation) annotationNode;
+            annotationPosTable.put(annotation.pos, annotation);
         }
-        List<J.Annotation> packageAnnotations = annotationPosTable.isEmpty() ? null : collectAnnotations(annotationPosTable);
+        List<J.Annotation> packageAnnotations = collectAnnotations(annotationPosTable);
 
         J.Package packageDecl = null;
         if (cu.getPackageName() != null) {
