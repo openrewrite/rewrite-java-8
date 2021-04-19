@@ -84,6 +84,7 @@ dependencies {
     compileOnly("org.slf4j:slf4j-api:1.7.+")
 
     implementation("org.openrewrite:rewrite-java:$rewriteVersion")
+    implementation("org.ow2.asm:asm:latest.release")
 
     testImplementation("org.jetbrains.kotlin:kotlin-reflect")
     testImplementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")

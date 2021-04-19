@@ -24,6 +24,9 @@ import com.sun.tools.javac.util.Log;
 import com.sun.tools.javac.util.Options;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.Timer;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.Opcodes;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.InMemoryExecutionContext;
 import org.openrewrite.internal.MetricsHelper;
@@ -34,18 +37,17 @@ import org.openrewrite.java.tree.JavaType;
 import org.openrewrite.style.NamedStyles;
 import org.openrewrite.java.tree.Space;
 
-import javax.tools.FileObject;
-import javax.tools.JavaFileManager;
-import javax.tools.StandardLocation;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.UncheckedIOException;
-import java.io.Writer;
+import javax.tools.*;
+import java.io.*;
+import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import static java.util.stream.Collectors.toList;
 
@@ -72,6 +74,7 @@ class ReloadableJava8Parser implements JavaParser {
     private final Collection<NamedStyles> styles;
 
     ReloadableJava8Parser(@Nullable Collection<Path> classpath,
+                          Collection<byte[]> classBytesClasspath,
                           @Nullable Collection<Input> dependsOn,
                           Charset charset,
                           boolean relaxedClassTypeMatching,
@@ -84,12 +87,7 @@ class ReloadableJava8Parser implements JavaParser {
 
         this.context = new Context();
         this.compilerLog = new ResettableLog(context);
-        this.pfm = new JavacFileManager(context, true, charset) {
-            @Override
-            public boolean isSameFile(FileObject fileObject, FileObject fileObject1) {
-                return fileObject.equals(fileObject1);
-            }
-        };
+        this.pfm = new ByteArrayCapableJavacFileManager(context, true, charset, classBytesClasspath);
         context.put(JavaFileManager.class, this.pfm);
 
         // otherwise, consecutive string literals in binary expressions are concatenated by the parser, losing the original
@@ -284,6 +282,91 @@ class ReloadableJava8Parser implements JavaParser {
         public Env<AttrContext> remove() {
             this.sample = Timer.start();
             return todo.remove();
+        }
+    }
+
+    private static class ByteArrayCapableJavacFileManager extends JavacFileManager {
+        private final List<PackageAwareJavaFileObject> classByteClasspath;
+
+        public ByteArrayCapableJavacFileManager(Context context,
+                                                boolean register,
+                                                Charset charset,
+                                                Collection<byte[]> classByteClasspath) {
+            super(context, register, charset);
+            this.classByteClasspath = classByteClasspath.stream()
+                    .map(PackageAwareJavaFileObject::new)
+                    .collect(toList());
+        }
+
+        @Override
+        public boolean isSameFile(FileObject fileObject, FileObject fileObject1) {
+            return fileObject.equals(fileObject1);
+        }
+
+        @Override
+        public String inferBinaryName(Location location, JavaFileObject file) {
+            if (file instanceof PackageAwareJavaFileObject) {
+                return ((PackageAwareJavaFileObject) file).getClassName();
+            }
+            return super.inferBinaryName(location, file);
+        }
+
+        @Override
+        public Iterable<JavaFileObject> list(Location location, String packageName, Set<JavaFileObject.Kind> kinds, boolean recurse) throws IOException {
+            if (StandardLocation.CLASS_PATH.equals(location)) {
+                Iterable<JavaFileObject> listed = super.list(location, packageName, kinds, recurse);
+                return Stream.concat(
+                        classByteClasspath.stream()
+                                .filter(jfo -> jfo.getPackage().equals(packageName)),
+                        StreamSupport.stream(listed.spliterator(), false)
+                ).collect(toList());
+            }
+            return super.list(location, packageName, kinds, recurse);
+        }
+    }
+
+    private static class PackageAwareJavaFileObject extends SimpleJavaFileObject {
+        private final String pkg;
+        private final String className;
+        private final byte[] classBytes;
+
+        private PackageAwareJavaFileObject(byte[] classBytes) {
+            super(URI.create("dontCare"), Kind.CLASS);
+
+            AtomicReference<String> pkgRef = new AtomicReference<>();
+            AtomicReference<String> nameRef = new AtomicReference<>();
+
+            ClassReader classReader = new ClassReader(classBytes);
+            classReader.accept(new ClassVisitor(Opcodes.ASM9) {
+                @Override
+                public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+                    if(name.contains("/")) {
+                        pkgRef.set(name.substring(0, name.lastIndexOf('/'))
+                                .replace('/', '.'));
+                        nameRef.set(name.substring(name.lastIndexOf('/') + 1));
+                    } else {
+                        pkgRef.set(name);
+                        nameRef.set(name);
+                    }
+                }
+            }, ClassReader.SKIP_DEBUG | ClassReader.SKIP_CODE | ClassReader.SKIP_FRAMES);
+
+            this.pkg = pkgRef.get();
+            this.className = nameRef.get();
+            this.classBytes = classBytes;
+        }
+
+        public String getPackage() {
+            return pkg;
+        }
+
+        public String getClassName() {
+            return className;
+        }
+
+        @Override
+        public InputStream openInputStream() {
+            return new ByteArrayInputStream(classBytes);
         }
     }
 }
