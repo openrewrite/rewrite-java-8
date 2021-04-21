@@ -462,13 +462,13 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Space> {
         return new J.CompilationUnit(
                 randomId(),
                 fmt,
-                Markers.EMPTY,
+                Markers.build(styles),
                 sourcePath,
                 packageDecl == null ? null : padRight(packageDecl, sourceBefore(";")),
                 convertAll(node.getImports(), this::statementDelim, this::statementDelim),
                 convertAll(node.getTypeDecls().stream().filter(JCClassDecl.class::isInstance).collect(toList())),
                 format(source.substring(cursor))
-        ).withMarker(styles.toArray(new NamedStyles[0]));
+        );
     }
 
     @Override
