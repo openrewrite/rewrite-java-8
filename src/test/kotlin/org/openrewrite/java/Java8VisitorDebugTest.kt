@@ -28,6 +28,10 @@ class Java8AddImportTest : Java8Test, AddImportTest
 
 @DebugOnly
 @ExtendWith(JavaParserResolver::class)
+class Java8AddLicenseHeaderTest : Java8Test, AddLicenseHeaderTest
+
+@DebugOnly
+@ExtendWith(JavaParserResolver::class)
 class Java8BlankLinesTest : Java8Test, BlankLinesTest
 
 @DebugOnly
@@ -56,7 +60,15 @@ class Java8ChangeMethodTargetToVariableTest : Java8Test, ChangeMethodTargetToVar
 
 @DebugOnly
 @ExtendWith(JavaParserResolver::class)
+class Java8ChangePackageTest : Java8Test, ChangePackageTest
+
+@DebugOnly
+@ExtendWith(JavaParserResolver::class)
 class Java8ChangeTypeTest : Java8Test, ChangeTypeTest
+
+@DebugOnly
+@ExtendWith(JavaParserResolver::class)
+class Java8CovariantEqualsTest : Java8Test, CovariantEqualsTest
 
 @DebugOnly
 @ExtendWith(JavaParserResolver::class)
@@ -65,6 +77,26 @@ class Java8DeleteMethodArgumentTest : Java8Test, DeleteMethodArgumentTest
 @DebugOnly
 @ExtendWith(JavaParserResolver::class)
 class Java8DeleteStatementTest : Java8Test, DeleteStatementTest
+
+@DebugOnly
+@ExtendWith(JavaParserResolver::class)
+class Java8EmptyBlockTest : Java8Test, EmptyBlockTest
+
+@DebugOnly
+@ExtendWith(JavaParserResolver::class)
+class Java8EqualsAvoidsNullTest : Java8Test, EqualsAvoidsNullTest
+
+@DebugOnly
+@ExtendWith(JavaParserResolver::class)
+class Java8ExplicitInitializationTest : Java8Test, ExplicitInitializationTest
+
+@DebugOnly
+@ExtendWith(JavaParserResolver::class)
+class Java8FinalizeLocalVariablesTest : Java8Test, FinalizeLocalVariablesTest
+
+@DebugOnly
+@ExtendWith(JavaParserResolver::class)
+class Java8StaticMethodNotFinalTest : Java8Test, StaticMethodNotFinalTest
 
 @DebugOnly
 @ExtendWith(JavaParserResolver::class)
@@ -84,15 +116,19 @@ class Java8FindMethodsTest : Java8Test, FindMethodsTest
 
 @DebugOnly
 @ExtendWith(JavaParserResolver::class)
+class Java8FindTextTest : Java8Test, FindTextTest
+
+@DebugOnly
+@ExtendWith(JavaParserResolver::class)
 class Java8FindTypesTest : Java8Test, FindTypesTest
 
 @DebugOnly
 @ExtendWith(JavaParserResolver::class)
-class Java8HideUtilityClassConstructorTest : Java8Test, HideUtilityClassConstructorTest
+class Java8HasTypesTest : Java8Test, HasTypesTest
 
 @DebugOnly
 @ExtendWith(JavaParserResolver::class)
-class Java8SemanticallyEqualTest : Java8Test, SemanticallyEqualTest
+class Java8HideUtilityClassConstructorTest : Java8Test, HideUtilityClassConstructorTest
 
 @DebugOnly
 @ExtendWith(JavaParserResolver::class)
@@ -104,7 +140,15 @@ class Java8JavaTemplateTest : Java8Test, JavaTemplateTest
 
 @DebugOnly
 @ExtendWith(JavaParserResolver::class)
+class Java8MethodNameCasingTest : Java8Test, MethodNameCasingTest
+
+@DebugOnly
+@ExtendWith(JavaParserResolver::class)
 class Java8MinimumViableSpacingTest : Java8Test, MinimumViableSpacingTest
+
+@DebugOnly
+@ExtendWith(JavaParserResolver::class)
+class Java8ModifierOrderTest : Java8Test, ModifierOrderTest
 
 @DebugOnly
 @ExtendWith(JavaParserResolver::class)
@@ -116,6 +160,14 @@ class Java8OrderImportsTest : Java8Test, OrderImportsTest
 
 @DebugOnly
 @ExtendWith(JavaParserResolver::class)
+class Java8RemoveAnnotationTest: Java8Test, RemoveAnnotationTest
+
+@DebugOnly
+@ExtendWith(JavaParserResolver::class)
+class Java8RemoveTrailingWhitespaceTest : Java8Test, RemoveTrailingWhitespaceTest
+
+@DebugOnly
+@ExtendWith(JavaParserResolver::class)
 class Java8RemoveUnusedImportsTest : Java8Test, RemoveUnusedImportsTest
 
 @DebugOnly
@@ -124,11 +176,15 @@ class Java8RenameVariableTest : Java8Test, RenameVariableTest
 
 @DebugOnly
 @ExtendWith(JavaParserResolver::class)
-class Java8RemoveTrailingWhitespaceTest : Java8Test, RemoveTrailingWhitespaceTest
+class Java8ReorderMethodArgumentsTest : Java8Test, ReorderMethodArgumentsTest
 
 @DebugOnly
 @ExtendWith(JavaParserResolver::class)
-class Java8ReorderMethodArgumentsTest : Java8Test, ReorderMethodArgumentsTest
+class Java8ResultOfMethodCallIgnoredTest : Java8Test, ResultOfMethodCallIgnoredTest
+
+@DebugOnly
+@ExtendWith(JavaParserResolver::class)
+class Java8SemanticallyEqualTest : Java8Test, SemanticallyEqualTest
 
 @DebugOnly
 @ExtendWith(JavaParserResolver::class)
@@ -152,6 +208,10 @@ class Java8TypeTreeTest : Java8Test, TypeTreeTest
 
 @DebugOnly
 @ExtendWith(JavaParserResolver::class)
+class Java8UnnecessaryExplicitTypeArgumentsTest : Java8Test, UnnecessaryExplicitTypeArgumentsTest
+
+@DebugOnly
+@ExtendWith(JavaParserResolver::class)
 class Java8UnnecessaryParenthesesTest : Java8Test, UnnecessaryParenthesesTest
 
 @DebugOnly
@@ -160,8 +220,20 @@ class Java8UnwrapParenthesesTest : Java8Test, UnwrapParenthesesTest
 
 @DebugOnly
 @ExtendWith(JavaParserResolver::class)
+class Java8UseDiamondOperatorTest : Java8Test, UseDiamondOperatorTest
+
+@DebugOnly
+@ExtendWith(JavaParserResolver::class)
 class Java8UseStaticImportTest : Java8Test, UseStaticImportTest
 
 @DebugOnly
 @ExtendWith(JavaParserResolver::class)
 class Java8WrappingAndBracesTest : Java8Test, WrappingAndBracesTest
+
+@DebugOnly
+@ExtendWith(JavaParserResolver::class)
+class Java8XmlParserXXEVulnerabilityTest: Java8Test, XmlParserXXEVulnerabilityTest
+
+@DebugOnly
+@ExtendWith(JavaParserResolver::class)
+class Java8PrimitiveWrapperClassConstructorToValueOfTest: Java8Test, PrimitiveWrapperClassConstructorToValueOfTest
