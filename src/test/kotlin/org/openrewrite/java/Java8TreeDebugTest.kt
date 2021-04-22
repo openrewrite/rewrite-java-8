@@ -57,6 +57,10 @@ class Java8ClassDeclarationTest: Java8Test, ClassDeclarationTest
 
 @DebugOnly
 @ExtendWith(JavaParserResolver::class)
+class Java8CommentTest: Java8Test, CommentTest
+
+@DebugOnly
+@ExtendWith(JavaParserResolver::class)
 class Java8CompilationUnitTest: Java8Test, CompilationUnitTest
 
 @DebugOnly
@@ -102,6 +106,10 @@ class Java8InstanceOfTest: Java8Test, InstanceOfTest
 @DebugOnly
 @ExtendWith(JavaParserResolver::class)
 class Java8JavaParserTest: Java8Test, JavaParserTest
+
+@DebugOnly
+@ExtendWith(JavaParserResolver::class)
+class Java8JavaTypeSerializerTest: Java8Test, JavaTypeSerializerTest
 
 @DebugOnly
 @ExtendWith(JavaParserResolver::class)
