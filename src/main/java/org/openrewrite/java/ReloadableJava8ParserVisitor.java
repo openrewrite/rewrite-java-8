@@ -967,8 +967,12 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Space> {
                     convertAll(members, noDelim, noDelim), sourceBefore("}"));
         }
 
+        JCNewClass jcNewClass = (JCNewClass) node;
+        JavaType.Method constructorType = methodType(jcNewClass.constructorType, jcNewClass.constructor, "<constructor>");
+
         return new J.NewClass(randomId(), fmt, Markers.EMPTY, encl, whitespaceBeforeNew,
-                clazz, args, body, type(((JCNewClass) node).type));
+                clazz, args, body, constructorType,
+                type(jcNewClass.type));
     }
 
     @Override
@@ -1393,7 +1397,8 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Space> {
 
     private <J2 extends J> JRightPadded<J2> convert(Tree t, Function<Tree, Space> suffix) {
         J2 j = convert(t);
-        JRightPadded<J2> rightPadded = j == null ? null : new JRightPadded<>(j, suffix.apply(t), Markers.EMPTY);
+        @SuppressWarnings("ConstantConditions") JRightPadded<J2> rightPadded = j == null ? null :
+                new JRightPadded<>(j, suffix.apply(t), Markers.EMPTY);
         cursor(max(endPos(t), cursor)); // if there is a non-empty suffix, the cursor may have already moved past it
         return rightPadded;
     }
@@ -1430,7 +1435,7 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Space> {
         return converted;
     }
 
-    @Nullable private JContainer<Expression> convertTypeParameters(List<? extends Tree> typeArguments) {
+    @Nullable private JContainer<Expression> convertTypeParameters(@Nullable List<? extends Tree> typeArguments) {
         if (typeArguments == null) {
             return null;
         }
@@ -1510,7 +1515,7 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Space> {
     }
 
     @Nullable
-    private JavaType.Method methodType(Type selectType, @Nullable Symbol symbol, String methodName) {
+    private JavaType.Method methodType(@Nullable Type selectType, @Nullable Symbol symbol, String methodName) {
         // if the symbol is not a method symbol, there is a parser error in play
         Symbol.MethodSymbol methodSymbol = symbol instanceof Symbol.MethodSymbol ? (Symbol.MethodSymbol) symbol : null;
 
@@ -1565,10 +1570,13 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Space> {
                 }
             }
 
+            JavaType.Class declaringType = TypeUtils.asClass(type(methodSymbol.owner));
+            assert declaringType != null;
+
             return JavaType.Method.build(
                     //Currently only the first 16 bits are meaninful
                     (int) methodSymbol.flags_field & 0xFFFF,
-                    TypeUtils.asClass(type(methodSymbol.owner)),
+                    declaringType,
                     methodName,
                     genericSignature,
                     signature.apply(selectType),
