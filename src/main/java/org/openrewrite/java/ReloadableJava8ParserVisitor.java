@@ -350,7 +350,7 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Space> {
             annotationPosTable.put(annotation.pos, annotation);
         }
 
-        ModifierResults modifierResults = sortedModifiersAndAnnotations(node.getModifiers(), annotationPosTable);
+        Java8ModifierResults modifierResults = sortedModifiersAndAnnotations(node.getModifiers(), annotationPosTable);
 
         List<J.Annotation> kindAnnotations = collectAnnotations(annotationPosTable);
 
@@ -811,7 +811,7 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Space> {
             JCAnnotation annotation = (JCAnnotation) annotationNode;
             annotationPosTable.put(annotation.pos, annotation);
         }
-        ModifierResults modifierResults = sortedModifiersAndAnnotations(node.getModifiers(), annotationPosTable);
+        Java8ModifierResults modifierResults = sortedModifiersAndAnnotations(node.getModifiers(), annotationPosTable);
 
         J.TypeParameters typeParams;
         if (node.getTypeParameters().isEmpty()) {
@@ -1255,7 +1255,7 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Space> {
         for (JCAnnotation annotationNode : node.getModifiers().getAnnotations()) {
             annotationPosTable.put(annotationNode.pos, annotationNode);
         }
-        ModifierResults modifierResults = sortedModifiersAndAnnotations(node.getModifiers(), annotationPosTable);
+        Java8ModifierResults modifierResults = sortedModifiersAndAnnotations(node.getModifiers(), annotationPosTable);
 
         List<J.Annotation> typeExprAnnotations = collectAnnotations(annotationPosTable);
 
@@ -1948,7 +1948,7 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Space> {
      * Leading Annotations and modifiers in the order they appear in the source, which is not necessarily the same as the order in
      * which they appear in the OpenJDK AST
      */
-    private ModifierResults sortedModifiersAndAnnotations(ModifiersTree modifiers, Map<Integer, JCAnnotation> annotationPosTable) {
+    private Java8ModifierResults sortedModifiersAndAnnotations(ModifiersTree modifiers, Map<Integer, JCAnnotation> annotationPosTable) {
         List<J.Annotation> leadingAnnotations = new ArrayList<>();
         List<J.Modifier> sortedModifiers = new ArrayList<>();
         List<J.Annotation> currentAnnotations = new ArrayList<>();
@@ -2014,7 +2014,7 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Space> {
         if (sortedModifiers.isEmpty()) {
             cursor = lastAnnotationPosition;
         }
-        return new ModifierResults(leadingAnnotations, sortedModifiers);
+        return new Java8ModifierResults(leadingAnnotations, sortedModifiers);
     }
 
     private J.Modifier mapModifier(Modifier mod, List<J.Annotation> annotations) {
