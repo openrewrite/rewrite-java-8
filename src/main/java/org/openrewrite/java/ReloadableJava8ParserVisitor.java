@@ -968,7 +968,7 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Space> {
         }
 
         JCNewClass jcNewClass = (JCNewClass) node;
-        JavaType.Method constructorType = methodType(jcNewClass.constructorType, jcNewClass.constructor, "<constructor>");
+        JavaType.Method constructorType = type((jcNewClass.constructor).owner) != null ? methodType(jcNewClass.constructorType, jcNewClass.constructor, "<constructor>") : null;
 
         return new J.NewClass(randomId(), fmt, Markers.EMPTY, encl, whitespaceBeforeNew,
                 clazz, args, body, constructorType,
@@ -1519,7 +1519,6 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Space> {
         // if the symbol is not a method symbol, there is a parser error in play
         Symbol.MethodSymbol methodSymbol = symbol instanceof Symbol.MethodSymbol ? (Symbol.MethodSymbol) symbol : null;
 
-        JavaType.Method type = null;
         if (methodSymbol != null && selectType != null) {
             Function<com.sun.tools.javac.code.Type, JavaType.Method.Signature> signature = t -> {
                 if (t instanceof MethodType) {
