@@ -32,6 +32,10 @@ class Java8AddLicenseHeaderTest : Java8Test, AddLicenseHeaderTest
 
 @DebugOnly
 @ExtendWith(JavaParserResolver::class)
+class Java8BigDecimalRoundingConstantsToEnumsTestTest : Java8Test, BigDecimalRoundingConstantsToEnumsTest
+
+@DebugOnly
+@ExtendWith(JavaParserResolver::class)
 class Java8BlankLinesTest : Java8Test, BlankLinesTest
 
 @DebugOnly
@@ -160,6 +164,14 @@ class Java8OrderImportsTest : Java8Test, OrderImportsTest
 
 @DebugOnly
 @ExtendWith(JavaParserResolver::class)
+class Java8PrimitiveWrapperClassConstructorToValueOfTest: Java8Test, PrimitiveWrapperClassConstructorToValueOfTest
+
+@DebugOnly
+@ExtendWith(JavaParserResolver::class)
+class Java8RedundantFileCreationTest : Java8Test, RedundantFileCreationTest
+
+@DebugOnly
+@ExtendWith(JavaParserResolver::class)
 class Java8RemoveAnnotationTest: Java8Test, RemoveAnnotationTest
 
 @DebugOnly
@@ -216,6 +228,10 @@ class Java8UnnecessaryParenthesesTest : Java8Test, UnnecessaryParenthesesTest
 
 @DebugOnly
 @ExtendWith(JavaParserResolver::class)
+class Java8UnnecessaryThrowsTest : Java8Test, UnnecessaryThrowsTest
+
+@DebugOnly
+@ExtendWith(JavaParserResolver::class)
 class Java8UnwrapParenthesesTest : Java8Test, UnwrapParenthesesTest
 
 @DebugOnly
@@ -233,7 +249,3 @@ class Java8WrappingAndBracesTest : Java8Test, WrappingAndBracesTest
 @DebugOnly
 @ExtendWith(JavaParserResolver::class)
 class Java8XmlParserXXEVulnerabilityTest: Java8Test, XmlParserXXEVulnerabilityTest
-
-@DebugOnly
-@ExtendWith(JavaParserResolver::class)
-class Java8PrimitiveWrapperClassConstructorToValueOfTest: Java8Test, PrimitiveWrapperClassConstructorToValueOfTest
