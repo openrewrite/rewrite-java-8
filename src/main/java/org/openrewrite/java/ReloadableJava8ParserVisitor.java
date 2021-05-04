@@ -968,7 +968,10 @@ public class ReloadableJava8ParserVisitor extends TreePathScanner<J, Space> {
         }
 
         JCNewClass jcNewClass = (JCNewClass) node;
-        JavaType.Method constructorType = type((jcNewClass.constructor).owner) != null ? methodType(jcNewClass.constructorType, jcNewClass.constructor, "<constructor>") : null;
+        JavaType.Method constructorType = null;
+        if (jcNewClass.constructor != null && type((jcNewClass.constructor).owner) != null) {
+            constructorType = methodType(jcNewClass.constructorType, jcNewClass.constructor, "<constructor>");
+        }
 
         return new J.NewClass(randomId(), fmt, Markers.EMPTY, encl, whitespaceBeforeNew,
                 clazz, args, body, constructorType,
